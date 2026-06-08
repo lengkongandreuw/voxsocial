@@ -13,8 +13,8 @@
                 extend: {
                     colors: {
                         vox: {
-                            bg: '#2513B8', // Deep purple/blue from the image
-                            btn: '#191046', // Dark button color
+                            bg: '#2513B8', // Authentic deep purple/blue from mockup
+                            btn: '#191046', // Dark contrast button
                             accent: '#4324c4',
                         },
                         brand: {
@@ -34,7 +34,7 @@
                     keyframes: {
                         float: {
                             '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-20px)' },
+                            '50%': { transform: 'translateY(-15px)' },
                         },
                         fadeInUp: {
                             '0%': { opacity: '0', transform: 'translateY(20px)' },
@@ -60,13 +60,9 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #2513B8; /* Fallback */
+            background-color: #2513B8;
             color: #ffffff;
             overflow-x: hidden;
-        }
-        .text-outline {
-            -webkit-text-stroke: 1px rgba(255,255,255,0.2);
-            color: transparent;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -81,7 +77,7 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            pointer-events: none; /* Let clicks pass through to UI */
+            pointer-events: none;
         }
     </style>
 </head>
@@ -112,7 +108,6 @@
 
             useEffect(() => {
                 const scene = new THREE.Scene();
-                // Subtle fog to blend into the background
                 scene.fog = new THREE.FogExp2(0x2513B8, 0.0015);
 
                 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -123,9 +118,9 @@
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 mountRef.current.appendChild(renderer.domElement);
 
-                // Create a sophisticated network geometry
+                // Grid particle system
                 const geometry = new THREE.BufferGeometry();
-                const particlesCount = 150;
+                const particlesCount = 120;
                 const posArray = new Float32Array(particlesCount * 3);
 
                 for(let i = 0; i < particlesCount * 3; i++) {
@@ -134,19 +129,17 @@
 
                 geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
 
-                // Custom particle material (glowing dots)
                 const material = new THREE.PointsMaterial({
-                    size: 0.15,
-                    color: 0x00f0ff,
+                    size: 0.18,
+                    color: 0x38bdf8,
                     transparent: true,
-                    opacity: 0.6,
+                    opacity: 0.5,
                     blending: THREE.AdditiveBlending
                 });
 
                 const particlesMesh = new THREE.Points(geometry, material);
                 scene.add(particlesMesh);
 
-                // Add subtle slow rotation
                 let mouseX = 0;
                 let mouseY = 0;
                 
@@ -158,13 +151,11 @@
 
                 const animate = () => {
                     requestAnimationFrame(animate);
-                    // Slow idle rotation
-                    particlesMesh.rotation.y += 0.0005;
-                    particlesMesh.rotation.x += 0.0002;
+                    particlesMesh.rotation.y += 0.0003;
+                    particlesMesh.rotation.x += 0.0001;
                     
-                    // Mouse parallax effect for the particles
-                    particlesMesh.position.x += (mouseX * 5 - particlesMesh.position.x) * 0.05;
-                    particlesMesh.position.y += (-mouseY * 5 - particlesMesh.position.y) * 0.05;
+                    particlesMesh.position.x += (mouseX * 4 - particlesMesh.position.x) * 0.05;
+                    particlesMesh.position.y += (-mouseY * 4 - particlesMesh.position.y) * 0.05;
 
                     renderer.render(scene, camera);
                 };
@@ -195,8 +186,6 @@
             const [view, setView] = useState('landing'); 
             const [profileUrl, setProfileUrl] = useState('');
             const [analyzingStep, setAnalyzingStep] = useState(0);
-            const [leadSubmitted, setLeadSubmitted] = useState(false);
-            const [leadData, setLeadData] = useState({ name: '', email: '', company: '', phone: '' });
             const [analysisResults, setAnalysisResults] = useState(null);
 
             const analysisSteps = [
@@ -248,6 +237,7 @@ Use SIMPLE, friendly, professional, and easy-to-understand ENGLISH.
 Output format must be pure JSON with the following structure without extra markdown:
 {
   "businessName": "Detected Business Name or Handle from URL",
+  "profileIdentity": "One single sentence summarizing exactly WHO this profile is or what business they do (e.g., 'This profile belongs to a local coffee shop offering artisanal blends.').",
   "score": 40-95,
   "label": "Excellent" (90-100) or "Very Good" (80-89) or "Good" (70-79) or "Fair" (60-69) or "Needs Attention" (below 60),
   "summary": "One friendly summary line highlighting potential and main improvement areas (max 100 chars).",
@@ -306,6 +296,7 @@ Output format must be pure JSON with the following structure without extra markd
                 
                 return {
                     businessName: "Your Business Profile",
+                    profileIdentity: "This profile appears to belong to a growing business operating in the consumer services or retail sector.",
                     score: score,
                     label: score >= 90 ? "Excellent" : score >= 80 ? "Very Good" : score >= 70 ? "Good" : "Fair",
                     summary: "Your profile has a solid foundation. Focusing on clear calls-to-action will immediately boost trust and conversions.",
@@ -369,7 +360,7 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 1. LANDING VIEW (Perfect Replica)
+        // 1. LANDING VIEW (Compact Overlap Replica)
         // ==========================================
         function LandingSection({ profileUrl, setProfileUrl, handleAnalyze }) {
             const mascotRef = useRef(null);
@@ -378,9 +369,9 @@ Output format must be pure JSON with the following structure without extra markd
             useEffect(() => {
                 const handleMouseMove = (e) => {
                     if (!mascotRef.current) return;
-                    const x = (window.innerWidth / 2 - e.pageX) / 40;
-                    const y = (window.innerHeight / 2 - e.pageY) / 40;
-                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.02, 1.02, 1.02)`;
+                    const x = (window.innerWidth / 2 - e.pageX) / 45;
+                    const y = (window.innerHeight / 2 - e.pageY) / 45;
+                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.1, 1.1, 1.1)`;
                 };
                 window.addEventListener('mousemove', handleMouseMove);
                 return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -389,48 +380,32 @@ Output format must be pure JSON with the following structure without extra markd
             return (
                 <div className="min-h-screen w-full flex flex-col relative font-sans overflow-hidden">
                     
-                    {/* Header NavBar */}
-                    <nav className="flex items-center justify-between px-6 sm:px-12 py-6 w-full max-w-[1600px] mx-auto text-white z-20 animate-fade-in-up">
-                        <div className="flex items-center gap-3 font-extrabold text-xl tracking-tight">
-                            <div className="w-10 h-10 rounded-full bg-vox-btn flex items-center justify-center shadow-lg border border-white/10">
-                                <img src={LOGO_URL} className="w-8 h-8 rounded-full object-contain" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
+                    {/* Minimalist Header containing ONLY the brand redirect link */}
+                    <nav className="flex items-center justify-end px-6 sm:px-12 py-6 w-full max-w-[1600px] mx-auto text-white z-50 animate-fade-in-up">
+                        <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 font-extrabold text-lg tracking-tight hover:opacity-80 transition-opacity">
+                            <div className="w-9 h-9 rounded-full bg-vox-btn flex items-center justify-center shadow-lg border border-white/10">
+                                <img src={LOGO_URL} className="w-7 h-7 rounded-full object-contain" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
                             </div>
-                            VOXLUMEDIA
-                        </div>
-                        <div className="hidden lg:flex gap-10 text-[15px] font-medium text-white/90">
-                            <span className="cursor-pointer hover:text-white transition-colors relative group">How It Works
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
-                            </span>
-                            <span className="cursor-pointer hover:text-white transition-colors relative group">Why It Matters
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
-                            </span>
-                            <span className="cursor-pointer hover:text-white transition-colors relative group">Features
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
-                            </span>
-                            <span className="cursor-pointer hover:text-white transition-colors relative group">Examples
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
-                            </span>
-                            <span className="cursor-pointer hover:text-white transition-colors relative group">Pricing
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
-                            </span>
-                        </div>
-                        <button className="border border-white/30 rounded-full px-6 py-2.5 text-sm font-semibold hover:bg-white/10 hover:border-white transition-all duration-300 hidden sm:block backdrop-blur-sm">
-                            Book Free Consultation &rarr;
-                        </button>
+                            VOXLUMEDIA.COM &rarr;
+                        </a>
                     </nav>
 
-                    {/* Hero Section */}
-                    <div className="flex-grow flex flex-col lg:flex-row items-center justify-center max-w-[1500px] mx-auto px-6 py-4 gap-8 lg:gap-16 relative w-full z-10">
+                    {/* Centralized & Compact Hero Section */}
+                    <div className="flex-grow flex flex-col lg:flex-row items-center justify-center max-w-[1300px] mx-auto px-6 py-2 gap-8 lg:gap-4 relative w-full z-10">
                         
-                        {/* LEFT: Mascot */}
-                        <div className="w-full lg:w-5/12 flex justify-center relative perspective-1000">
-                            <div className="relative w-full max-w-[320px] sm:max-w-[450px] animate-float transition-transform duration-200 ease-out z-20" ref={mascotRef}>
+                        {/* LEFT: Massive Mascot Layer on Top (z-20) */}
+                        <div className="w-full lg:w-5/12 flex justify-center relative perspective-1000 z-20 lg:-mr-12">
+                            <div 
+                                className="relative w-full max-w-[340px] sm:max-w-[480px] animate-float transition-transform duration-300 ease-out" 
+                                ref={mascotRef}
+                                style={{ transform: 'scale3d(1.1, 1.1, 1.1)' }}
+                            >
                                 {/* Glow behind mascot */}
-                                <div className="absolute inset-0 bg-blue-400/20 blur-[100px] rounded-full"></div>
+                                <div className="absolute inset-0 bg-blue-400/20 blur-[120px] rounded-full"></div>
                                 <img 
                                     src={MASCOT_URL} 
                                     alt="Vox Mascot" 
-                                    className="w-full h-auto drop-shadow-2xl"
+                                    className="w-full h-auto drop-shadow-[0_25px_35px_rgba(0,0,0,0.45)] pointer-events-none"
                                     onError={(e) => {
                                         e.target.src = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=500";
                                         e.target.className = "rounded-[3rem] shadow-2xl grayscale";
@@ -439,22 +414,22 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
                         </div>
 
-                        {/* RIGHT: Typography & Input Area */}
-                        <div className="w-full lg:w-7/12 text-white space-y-8 text-center lg:text-left z-20 mt-8 lg:mt-0 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                        {/* RIGHT: Text Content with z-10 for Mascot Overlapping */}
+                        <div className="w-full lg:w-7/12 text-white space-y-6 text-center lg:text-left z-10 mt-4 lg:mt-0 animate-fade-in-up" style={{animationDelay: '0.15s'}}>
                             
                             <div className="space-y-4">
-                                <h1 className="text-[3.5rem] sm:text-7xl lg:text-[7.5rem] font-black uppercase leading-[0.9] tracking-tighter relative inline-block">
-                                    VOX SOCIAL <br />
-                                    MEDIA <span className="absolute font-brush text-vox-btn text-[0.8em] tracking-normal normal-case -rotate-[5deg] -right-4 lg:-right-24 bottom-2 lg:-bottom-2 drop-shadow-lg opacity-90 z-30">Score</span>
+                                <h1 className="text-[3.2rem] sm:text-6xl lg:text-[6.8rem] font-black uppercase leading-[0.88] tracking-tighter relative inline-block">
+                                    VOX S<span className="inline-flex items-center justify-center w-[0.85em] h-[0.85em] rounded-full bg-[#191046] border border-white/20 overflow-hidden mx-0.5 align-middle shadow-lg"><img src={LOGO_URL} className="w-full h-full object-cover scale-110" /></span>CIAL <br />
+                                    MEDIA <span className="absolute font-brush text-vox-btn text-[0.8em] tracking-normal normal-case -rotate-[5deg] -right-2 lg:-right-20 bottom-1 lg:-bottom-2 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] opacity-95 z-30">Score</span>
                                 </h1>
-                                <p className="text-base sm:text-[22px] font-medium text-white/90 max-w-lg mx-auto lg:mx-0 leading-snug pt-6">
+                                <p className="text-base sm:text-[20px] font-medium text-white/90 max-w-lg mx-auto lg:mx-0 leading-snug pt-3">
                                     Get a clear picture of your social media presence and discover growth opportunities.
                                 </p>
                             </div>
 
-                            {/* Search Input Bar */}
+                            {/* Minimalist & Responsive Search Pill */}
                             <form onSubmit={handleAnalyze} className="relative max-w-xl mx-auto lg:mx-0 pt-2">
-                                <div className="flex flex-col sm:flex-row gap-2 bg-white p-2 rounded-[2rem] sm:rounded-full shadow-2xl hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-shadow duration-300">
+                                <div className="flex flex-col sm:flex-row gap-2 bg-white p-1.5 rounded-[2rem] sm:rounded-full shadow-2xl hover:shadow-[0_0_35px_rgba(255,255,255,0.25)] transition-shadow duration-300">
                                     <div className="relative flex-grow flex items-center px-4">
                                         <i className="fa-solid fa-link text-gray-400 text-lg"></i>
                                         <input 
@@ -463,23 +438,23 @@ Output format must be pure JSON with the following structure without extra markd
                                             value={profileUrl}
                                             onChange={(e) => setProfileUrl(e.target.value)}
                                             placeholder="Paste your public social media URL here"
-                                            className="w-full bg-transparent text-gray-800 font-medium pl-4 pr-2 py-4 focus:outline-none text-base placeholder-gray-400"
+                                            className="w-full bg-transparent text-gray-800 font-semibold pl-4 pr-2 py-4 focus:outline-none text-base placeholder-gray-400"
                                         />
                                     </div>
                                     <button 
                                         type="submit" 
-                                        className="bg-vox-btn hover:bg-black text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 group"
+                                        className="bg-vox-btn hover:bg-black text-white font-bold px-8 py-4 rounded-full transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 group shadow-inner"
                                     >
                                         Check My Score <i className="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                                     </button>
                                 </div>
                             </form>
 
-                            {/* Trust Elements */}
-                            <div className="space-y-6 pt-4">
-                                <div className="flex flex-col sm:flex-row items-center gap-4 text-[15px] font-medium text-white/90 justify-center lg:justify-start">
+                            {/* Supported platforms list */}
+                            <div className="space-y-4 pt-3">
+                                <div className="flex flex-col sm:flex-row items-center gap-3 text-sm font-bold text-white/95 justify-center lg:justify-start">
                                     <span>Works with:</span>
-                                    <div className="flex gap-5 text-2xl">
+                                    <div className="flex gap-4 text-xl">
                                         <i className="fa-brands fa-instagram hover:-translate-y-1 transition-transform cursor-pointer"></i>
                                         <i className="fa-brands fa-facebook hover:-translate-y-1 transition-transform cursor-pointer"></i>
                                         <i className="fa-brands fa-tiktok hover:-translate-y-1 transition-transform cursor-pointer"></i>
@@ -488,10 +463,10 @@ Output format must be pure JSON with the following structure without extra markd
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-3 text-sm font-medium text-white/80">
-                                    <span className="flex items-center gap-2"><div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"><i className="fa-solid fa-lock text-[10px]"></i></div> No login required</span>
-                                    <span className="flex items-center gap-2"><div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"><i className="fa-solid fa-shield text-[10px]"></i></div> 100% safe & private</span>
-                                    <span className="flex items-center gap-2"><div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"><i className="fa-regular fa-eye text-[10px]"></i></div> We only read public information</span>
+                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-xs font-semibold text-white/80">
+                                    <span className="flex items-center gap-1.5"><i className="fa-solid fa-lock text-[10px]"></i> No login required</span>
+                                    <span className="flex items-center gap-1.5"><i className="fa-solid fa-shield text-[10px]"></i> 100% safe & private</span>
+                                    <span className="flex items-center gap-1.5"><i className="fa-regular fa-eye text-[10px]"></i> Public info only</span>
                                 </div>
                             </div>
 
@@ -499,8 +474,8 @@ Output format must be pure JSON with the following structure without extra markd
                     </div>
 
                     {/* Bottom White Features Section */}
-                    <div className="bg-white text-gray-900 rounded-t-[3rem] sm:rounded-t-[4rem] w-full mt-12 lg:mt-auto relative z-30 pt-16 pb-10 px-6 shadow-[0_-20px_50px_rgba(0,0,0,0.2)] animate-fade-in-up" style={{animationDelay: '0.4s'}}>
-                        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-10">
+                    <div className="bg-white text-gray-900 rounded-t-[2.5rem] sm:rounded-t-[3.5rem] w-full mt-10 lg:mt-auto relative z-30 pt-14 pb-8 px-6 shadow-[0_-15px_40px_rgba(0,0,0,0.15)] animate-fade-in-up animate-delay-300">
+                        <div className="max-w-[1300px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-10">
                             {[
                                 { icon: 'fa-solid fa-link', title: 'Enter Your Link', desc: 'Paste any public social media profile URL.' },
                                 { icon: 'fa-solid fa-magnifying-glass', title: 'We Analyze', desc: 'Our system reviews key elements of your profile.' },
@@ -508,20 +483,20 @@ Output format must be pure JSON with the following structure without extra markd
                                 { icon: 'fa-regular fa-lightbulb', title: 'Get Recommendations', desc: 'Receive simple and actionable improvement tips.' },
                                 { icon: 'fa-solid fa-rocket', title: 'Grow Your Business', desc: 'Improve your presence and attract more customers.' }
                             ].map((step, i) => (
-                                <div key={i} className="flex flex-col items-center text-center gap-4 group cursor-default">
-                                    <div className="w-16 h-16 rounded-full bg-vox-bg text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:bg-vox-btn transition-all duration-300">
+                                <div key={i} className="flex flex-col items-center text-center gap-3 group cursor-default">
+                                    <div className="w-14 h-14 rounded-full bg-vox-bg text-white flex items-center justify-center text-xl shadow-md group-hover:scale-105 group-hover:bg-vox-btn transition-all duration-300">
                                         <i className={step.icon}></i>
                                     </div>
                                     <div>
-                                        <h4 className="font-extrabold text-[#111827] text-lg mb-2">{step.title}</h4>
-                                        <p className="text-[14px] text-gray-500 font-medium leading-relaxed max-w-[220px] mx-auto">{step.desc}</p>
+                                        <h4 className="font-extrabold text-[#111827] text-base mb-1">{step.title}</h4>
+                                        <p className="text-[13px] text-gray-500 font-medium leading-relaxed max-w-[200px] mx-auto">{step.desc}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
                         
-                        <div className="text-center mt-12 pt-8 border-t border-gray-100">
-                            <p className="text-sm font-semibold text-vox-bg">
+                        <div className="text-center mt-10 pt-6 border-t border-gray-100">
+                            <p className="text-xs font-extrabold text-vox-bg">
                                 Built for business owners. <span className="border-b-2 border-vox-bg pb-0.5">Focused on growth.</span>
                             </p>
                         </div>
@@ -565,9 +540,7 @@ Output format must be pure JSON with the following structure without extra markd
                                 <div 
                                     className="bg-white h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden" 
                                     style={{ width: `${progressPercentage}%` }}
-                                >
-                                    <div className="absolute top-0 left-0 bottom-0 w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] animate-[shimmer_1.5s_infinite]"></div>
-                                </div>
+                                ></div>
                             </div>
                             
                             <div className="pt-3 text-xs font-bold text-white/90 h-8 flex items-center justify-center">
@@ -616,9 +589,8 @@ Output format must be pure JSON with the following structure without extra markd
 
                     <div className="max-w-5xl mx-auto py-12 px-6 space-y-10 animate-fade-in-up">
                         
-                        {/* PERFORMANCE SUMMARY SECTION (Requested) */}
+                        {/* PERFORMANCE SUMMARY SECTION */}
                         <div className="bg-white rounded-[2rem] border border-gray-200 p-8 sm:p-12 shadow-xl relative overflow-hidden">
-                            {/* Abstract bg element */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-vox-bg/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
                             <div className="text-center mb-10 relative z-10">
@@ -648,15 +620,21 @@ Output format must be pure JSON with the following structure without extra markd
                                             <span className="text-sm font-bold text-gray-400 uppercase mt-1">Score</span>
                                         </div>
                                     </div>
-                                    <span className={`px-6 py-2 rounded-full text-sm font-black border uppercase tracking-wider ${getScoreColor(results.score).replace('text-', 'text-').replace('bg-', 'bg-').replace('border-', 'border-')}`}>
+                                    <span className={`px-6 py-2 rounded-full text-sm font-black border uppercase tracking-wider ${getScoreColor(results.score)}`}>
                                         {results.label}
                                     </span>
                                 </div>
 
-                                {/* Narrative Summary */}
+                                {/* Narrative Summary with exact One Sentence Profile Identity Display */}
                                 <div className="md:col-span-7 space-y-6">
-                                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                        <p className="text-gray-700 font-semibold text-lg leading-relaxed">
+                                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-inner">
+                                        <div className="mb-4 pb-4 border-b border-gray-200">
+                                            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase mb-1 block">Profile Identity</span>
+                                            <p className="text-gray-900 font-bold text-lg leading-snug">
+                                                {results.profileIdentity}
+                                            </p>
+                                        </div>
+                                        <p className="text-gray-600 font-medium text-base leading-relaxed italic">
                                             "{results.summary}"
                                         </p>
                                     </div>
