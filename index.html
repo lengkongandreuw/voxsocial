@@ -100,9 +100,10 @@
         // Konfigurasi API
         const apiKey = ""; 
 
-        // URL Aset Gambar & SVG Sesuai Instruksi Mockup
-        const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox_large.png";
+        // URL Aset Gambar & PNG Sesuai Revisi Terbaru Anda (Menggunakan raw.githubusercontent)
+        const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox.png";
         const LOGO_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/vsllogo.png";
+        const HEADLINE_PNG_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/headline.png";
 
         // --- KOMPONEN LATAR BELAKANG THREE.JS ---
         const ThreeBackground = () => {
@@ -413,21 +414,18 @@ Output format must be pure JSON with the following structure without extra markd
                         {/* Kanvas Utama Fleksibel (Desktop absolute poster composition, Mobile responsive stacked) */}
                         <div className="relative flex-grow w-full min-h-[550px] lg:min-h-[700px] mt-6 lg:mt-0 flex flex-col justify-between lg:block">
                             
-                            {/* 1. BACKGROUND HEADLINE TEXT (Z-10) */}
-                            <div className="relative lg:absolute lg:left-1/2 lg:top-[8%] lg:-translate-x-1/2 z-10 pointer-events-none select-none text-center animate-fade-in-up">
-                                <h1 className="text-[14vw] sm:text-[10vw] lg:text-[11vw] leading-[0.82] font-black tracking-tight text-white/95 uppercase">
-                                    Vox Social
-                                    <br />
-                                    Media
-                                </h1>
-                                <div className="absolute right-[4%] sm:right-[15%] lg:right-[-4%] top-[38%] text-[8vw] sm:text-[6vw] lg:text-[6vw] font-brush text-[#191046] rotate-[-8deg] bg-amber-400 px-5 py-1 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.3)] border-2 border-white pointer-events-auto">
-                                    Score
-                                </div>
+                            {/* 1. BACKGROUND HEADLINE IMAGE (Z-10) - Menggunakan berkas headline.png sesuai instruksi */}
+                            <div className="relative lg:absolute lg:left-1/2 lg:top-[6%] lg:-translate-x-1/2 z-10 pointer-events-none select-none text-center animate-fade-in-up w-full flex justify-center">
+                                <img 
+                                    src={HEADLINE_PNG_URL} 
+                                    alt="Vox Social Media Score" 
+                                    className="w-[90%] max-w-[700px] h-auto object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)] pointer-events-none"
+                                />
                             </div>
 
-                            {/* 2. OVERLAPPING MASCOT (Z-30) - Terpaku di Kiri Bawah, Lebih Besar & Menonjol */}
+                            {/* 2. OVERLAPPING MASCOT (Z-30) - Terpaku di Kiri Bawah, Menggunakan ryanvox.png asli */}
                             <div 
-                                className="relative lg:absolute left-1/2 lg:left-[-6%] bottom-[-5%] -translate-x-1/2 lg:translate-x-0 z-30 w-[85vw] sm:w-[65vw] lg:w-[54vw] max-w-[900px] pointer-events-none mt-8 lg:mt-0 transition-transform duration-300 ease-out flex justify-center"
+                                className="relative lg:absolute left-1/2 lg:left-[-6%] bottom-[-5%] -translate-x-1/2 lg:translate-x-0 z-30 w-[85vw] sm:w-[65vw] lg:w-[52vw] max-w-[880px] pointer-events-none mt-8 lg:mt-0 transition-transform duration-300 ease-out flex justify-center"
                                 ref={mascotRef}
                             >
                                 <img 
@@ -438,7 +436,7 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
 
                             {/* 3. CTA FORM BLOCK (Z-40) - Terpaku di Kanan Bawah Headline */}
-                            <div className="relative lg:absolute right-0 lg:right-[4%] top-auto lg:top-[46%] z-40 w-full lg:w-[35vw] max-w-[560px] text-center lg:text-left mt-10 lg:mt-0 space-y-4 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                            <div className="relative lg:absolute right-0 lg:right-[4%] top-auto lg:top-[48%] z-45 w-full lg:w-[35vw] max-w-[560px] text-center lg:text-left mt-10 lg:mt-0 space-y-4 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
                                 <p className="text-white/90 text-sm sm:text-base lg:text-[1.08rem] max-w-[500px] mx-auto lg:mx-0 font-medium leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
                                     Get a clear picture of your Instagram presence and discover growth opportunities instantly.
                                 </p>
@@ -462,7 +460,7 @@ Output format must be pure JSON with the following structure without extra markd
                                         </div>
                                         <button 
                                             type="submit" 
-                                            className="bg-[#191046] hover:bg-black text-white font-extrabold px-8 py-3.5 rounded-full transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 group shadow-inner"
+                                            className="bg-[#191046] hover:bg-black text-white font-bold px-8 py-3.5 rounded-full transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 group shadow-inner"
                                         >
                                             Check Score &rarr;
                                         </button>
@@ -558,7 +556,7 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 3. RESULTS DASHBOARD
+        // 3. RESULTS DASHBOARD (Sophisticated Summary)
         // ==========================================
         function ResultsSection({ results, url, platform, setView }) {
             const [leadSubmitted, setLeadSubmitted] = useState(false);
@@ -579,7 +577,7 @@ Output format must be pure JSON with the following structure without extra markd
             return (
                 <div className="min-h-screen bg-[#FDFCF8] text-gray-900 w-full relative z-20 pb-20">
                     
-                    {/* Header bar */}
+                    {/* Header bar matching landing style but light mode */}
                     <nav className="bg-[#170a70] text-white px-6 sm:px-12 py-5 sticky top-0 z-50 shadow-md">
                         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
                             <div className="flex items-center gap-3 font-extrabold text-xl cursor-pointer" onClick={() => setView('landing')}>
