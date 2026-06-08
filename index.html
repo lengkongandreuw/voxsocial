@@ -8,14 +8,14 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Konfigurasi tema Tailwind untuk layout modern bernuansa ungu gelap (Deep Violet)
+        // Konfigurasi tema Tailwind untuk layout modern bernuansa ungu gelap (Deep Violet) sesuai mockup
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         vox: {
-                            bg: '#3b26be', // Gradasi atas
-                            bgBottom: '#170a70', // Gradasi bawah
+                            bg: '#3b26be', // Gradasi atas mockup
+                            bgBottom: '#170a70', // Gradasi bawah mockup
                             btn: '#191046', // Tombol gelap dengan kontras tinggi
                             accent: '#4324c4',
                         },
@@ -56,7 +56,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Three.js CDN untuk efek latar belakang 3D partikel -->
+    <!-- Three.js CDN untuk efek latar belakang 3D partikel bintang halus -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
@@ -97,10 +97,10 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Konfigurasi
+        // Konfigurasi API
         const apiKey = ""; 
 
-        // URL Aset Gambar
+        // URL Aset Gambar & SVG Sesuai Instruksi Mockup
         const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox_large.png";
         const LOGO_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/vsllogo.png";
         const HEADLINE_SVG_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/headlinevoxscore.svg";
@@ -111,8 +111,8 @@
 
             useEffect(() => {
                 const scene = new THREE.Scene();
-                // Menyelaraskan warna fog dengan latar gradasi gelap bawah (#170a70)
-                scene.fog = new THREE.FogExp2(0x170a70, 0.0015);
+                // Menyelaraskan warna kabut luar dengan bagian bawah gradasi linear mockup (#170a70)
+                scene.fog = new THREE.FogExp2(0x170a70, 0.0018);
 
                 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.z = 30;
@@ -122,9 +122,9 @@
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 mountRef.current.appendChild(renderer.domElement);
 
-                // Grid sistem partikel
+                // Grid sistem partikel bintang luar angkasa
                 const geometry = new THREE.BufferGeometry();
-                const particlesCount = 120;
+                const particlesCount = 100;
                 const posArray = new Float32Array(particlesCount * 3);
 
                 for(let i = 0; i < particlesCount * 3; i++) {
@@ -134,10 +134,10 @@
                 geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
 
                 const material = new THREE.PointsMaterial({
-                    size: 0.18,
+                    size: 0.15,
                     color: 0x38bdf8,
                     transparent: true,
-                    opacity: 0.5,
+                    opacity: 0.4,
                     blending: THREE.AdditiveBlending
                 });
 
@@ -155,11 +155,11 @@
 
                 const animate = () => {
                     requestAnimationFrame(animate);
-                    particlesMesh.rotation.y += 0.0003;
+                    particlesMesh.rotation.y += 0.0002;
                     particlesMesh.rotation.x += 0.0001;
                     
-                    particlesMesh.position.x += (mouseX * 4 - particlesMesh.position.x) * 0.05;
-                    particlesMesh.position.y += (-mouseY * 4 - particlesMesh.position.y) * 0.05;
+                    particlesMesh.position.x += (mouseX * 3 - particlesMesh.position.x) * 0.05;
+                    particlesMesh.position.y += (-mouseY * 3 - particlesMesh.position.y) * 0.05;
 
                     renderer.render(scene, camera);
                 };
@@ -223,10 +223,6 @@
             const detectPlatform = (url) => {
                 const lower = url.toLowerCase();
                 if (lower.includes('instagram.com')) return 'Instagram';
-                if (lower.includes('facebook.com')) return 'Facebook Page';
-                if (lower.includes('tiktok.com')) return 'TikTok';
-                if (lower.includes('linkedin.com')) return 'LinkedIn';
-                if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'YouTube';
                 return 'Social Media Profile';
             };
 
@@ -352,7 +348,7 @@ Output format must be pure JSON with the following structure without extra markd
             return (
                 <div className="min-h-screen flex flex-col font-sans bg-gradient-to-b from-[#3b26be] to-[#170a70] text-white relative">
                     
-                    {/* Tampilkan latar belakang 3D interaktif hanya di halaman utama */}
+                    {/* Tampilkan latar belakang 3D partikel interaktif hanya di halaman utama */}
                     {view === 'landing' && <ThreeBackground />}
 
                     <main className="flex-grow flex flex-col relative z-10">
@@ -384,7 +380,7 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 1. LANDING VIEW (Mascot Dominant & Headline SVG)
+        // 1. LANDING VIEW (Perfect Overlap Replica)
         // ==========================================
         function LandingSection({ profileUrl, setProfileUrl, handleAnalyze, inputError, setInputError }) {
             const mascotRef = useRef(null);
@@ -395,7 +391,7 @@ Output format must be pure JSON with the following structure without extra markd
                     if (!mascotRef.current) return;
                     const x = (window.innerWidth / 2 - e.pageX) / 45;
                     const y = (window.innerHeight / 2 - e.pageY) / 45;
-                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.15, 1.15, 1.15)`;
+                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.18, 1.18, 1.18)`;
                 };
                 window.addEventListener('mousemove', handleMouseMove);
                 return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -404,28 +400,28 @@ Output format must be pure JSON with the following structure without extra markd
             return (
                 <div className="min-h-screen w-full flex flex-col relative font-sans overflow-hidden">
                     
-                    {/* Header Navigasi Minimalis ke website utama */}
+                    {/* Header Navigasi Minimalis ke website utama (Pojok Kanan Atas) */}
                     <nav className="flex items-center justify-end px-6 sm:px-12 py-6 w-full max-w-[1600px] mx-auto text-white z-50 animate-fade-in-up">
-                        <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 font-extrabold text-lg tracking-tight hover:opacity-80 transition-opacity">
-                            <div className="w-9 h-9 rounded-full bg-vox-btn flex items-center justify-center shadow-lg border border-white/10">
-                                <img src={LOGO_URL} className="w-7 h-7 rounded-full object-contain" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
+                        <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-vox-btn/60 backdrop-blur-md border border-white/10 rounded-full px-5 py-2.5 text-sm font-extrabold tracking-tight hover:opacity-90 hover:border-white/20 transition-all">
+                            <div className="w-6 h-6 rounded-full bg-[#191046] flex items-center justify-center overflow-hidden">
+                                <img src={LOGO_URL} className="w-full h-full object-contain" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
                             </div>
                             VOXLUMEDIA.COM &rarr;
                         </a>
                     </nav>
 
                     {/* Area Hero Utama yang Dioptimalkan untuk Menonjolkan Maskot */}
-                    <div className="flex-grow flex flex-col lg:flex-row items-center justify-center max-w-[1450px] mx-auto px-6 py-2 gap-8 lg:gap-2 relative w-full z-10">
+                    <div className="flex-grow flex flex-col lg:flex-row items-center justify-center max-w-[1350px] mx-auto px-6 py-2 gap-8 lg:gap-4 relative w-full z-10">
                         
                         {/* KIRI: Maskot ryanvox_large.png Berukuran Sangat Besar & Dominan (z-30) */}
-                        <div className="w-full lg:w-5/12 flex justify-center relative perspective-1000 z-30 lg:-mr-4">
+                        <div className="w-full lg:w-5/12 flex justify-center relative perspective-1000 z-30 lg:-mr-6">
                             <div 
-                                className="relative w-full max-w-[400px] sm:max-w-[560px] lg:max-w-[640px] animate-float transition-transform duration-300 ease-out" 
+                                className="relative w-full max-w-[380px] sm:max-w-[540px] lg:max-w-[620px] animate-float transition-transform duration-300 ease-out" 
                                 ref={mascotRef}
-                                style={{ transform: 'scale3d(1.15, 1.15, 1.15)' }}
+                                style={{ transform: 'scale3d(1.18, 1.18, 1.18)' }}
                             >
                                 {/* Pijaran cahaya biru futuristik di belakang robot */}
-                                <div className="absolute inset-0 bg-blue-400/25 blur-[130px] rounded-full"></div>
+                                <div className="absolute inset-0 bg-blue-400/25 blur-[120px] rounded-full"></div>
                                 <img 
                                     src={MASCOT_URL} 
                                     alt="Vox Large Mascot" 
@@ -438,15 +434,15 @@ Output format must be pure JSON with the following structure without extra markd
                         <div className="w-full lg:w-7/12 text-white space-y-6 text-center lg:text-left z-10 mt-4 lg:mt-0 animate-fade-in-up" style={{animationDelay: '0.15s'}}>
                             
                             <div className="space-y-4">
-                                {/* Headline Digantikan dengan SVG Headline Khusus */}
-                                <div className="max-w-md sm:max-w-lg lg:max-w-[540px] mx-auto lg:mx-0">
+                                {/* Headline Digantikan dengan SVG Headline Khusus sesuai Mockup */}
+                                <div className="max-w-md sm:max-w-lg lg:max-w-[560px] mx-auto lg:mx-0">
                                     <img 
                                         src={HEADLINE_SVG_URL} 
                                         alt="Vox Social Media Score" 
                                         className="w-full h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] pointer-events-none"
                                     />
                                 </div>
-                                <p className="text-base sm:text-[20px] font-medium text-white/90 max-w-lg mx-auto lg:mx-0 leading-snug pt-3">
+                                <p className="text-base sm:text-[18px] font-medium text-white/95 max-w-lg mx-auto lg:mx-0 leading-snug pt-2">
                                     Get a clear picture of your Instagram presence and discover growth opportunities.
                                 </p>
                             </div>
@@ -477,6 +473,12 @@ Output format must be pure JSON with the following structure without extra markd
                                     </button>
                                 </div>
 
+                                {/* Indikator Info dan Sisa Karakter sesuai Layout Mockup */}
+                                <div className="flex justify-between items-center text-xs text-white/70 px-4 font-semibold">
+                                    <span>Instagram URLs Only</span>
+                                    <span>{profileUrl.length}/100 characters</span>
+                                </div>
+
                                 {/* Pemberitahuan Kesalahan Validasi Input */}
                                 {inputError && (
                                     <div className="bg-rose-500/20 border border-rose-500/40 text-rose-200 px-5 py-3 rounded-2xl text-sm font-semibold flex items-center gap-3 animate-fade-in-up">
@@ -484,12 +486,6 @@ Output format must be pure JSON with the following structure without extra markd
                                         <span>{inputError}</span>
                                     </div>
                                 )}
-
-                                {/* Indikator Sisa Jumlah Karakter Maksimal 100 */}
-                                <div className="flex justify-between items-center text-xs text-white/60 px-4">
-                                    <span>Instagram URLs Only</span>
-                                    <span>{profileUrl.length}/100 characters</span>
-                                </div>
                             </form>
 
                             {/* Daftar Dukungan Khusus Instagram */}
@@ -499,12 +495,12 @@ Output format must be pure JSON with the following structure without extra markd
                                     <div className="flex gap-4 text-xl">
                                         <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/15">
                                             <i className="fa-brands fa-instagram text-pink-400"></i>
-                                            <span className="text-xs uppercase tracking-wider">Instagram Audit</span>
+                                            <span className="text-xs uppercase tracking-wider font-extrabold">Instagram Audit</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-xs font-semibold text-white/80">
+                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-xs font-bold text-white/70">
                                     <span className="flex items-center gap-1.5"><i className="fa-solid fa-lock text-[10px]"></i> No login required</span>
                                     <span className="flex items-center gap-1.5"><i className="fa-solid fa-shield text-[10px]"></i> 100% safe & private</span>
                                     <span className="flex items-center gap-1.5"><i className="fa-regular fa-eye text-[10px]"></i> Public info only</span>
@@ -537,8 +533,8 @@ Output format must be pure JSON with the following structure without extra markd
                         </div>
                         
                         <div className="text-center mt-10 pt-6 border-t border-gray-100">
-                            <p className="text-xs font-extrabold text-vox-bg">
-                                Built for business owners. <span className="border-b-2 border-vox-bg pb-0.5">Focused on growth.</span>
+                            <p className="text-xs font-extrabold text-[#3b26be]">
+                                Built for business owners. <span className="border-b-2 border-[#3b26be] pb-0.5">Focused on growth.</span>
                             </p>
                         </div>
                     </div>
@@ -616,7 +612,7 @@ Output format must be pure JSON with the following structure without extra markd
                 <div className="min-h-screen bg-[#FDFCF8] text-gray-900 w-full relative z-20 pb-20">
                     
                     {/* Header bar matching landing style but light mode */}
-                    <nav className="bg-vox-bg text-white px-6 sm:px-12 py-5 sticky top-0 z-50 shadow-md">
+                    <nav className="bg-[#170a70] text-white px-6 sm:px-12 py-5 sticky top-0 z-50 shadow-md">
                         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
                             <div className="flex items-center gap-3 font-extrabold text-xl cursor-pointer" onClick={() => setView('landing')}>
                                 <img src={LOGO_URL} className="w-8 h-8 rounded-full bg-white p-0.5" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
