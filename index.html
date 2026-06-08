@@ -12,23 +12,34 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            DEFAULT: '#0f172a', // Slate 900 for high-contrast modern look
-                            light: '#334155',
-                            dark: '#020617',
-                            accent: '#4324c4', // Keep original vox purple for subtle accents
+                        vox: {
+                            bg: '#2513B8', // Deep purple/blue from the image
+                            btn: '#191046', // Dark button color
+                            accent: '#4324c4',
                         },
-                        surface: {
-                            DEFAULT: '#FDFCF8', // Warm off-white/cream like the reference image
-                            card: '#FFFFFF',
+                        brand: {
+                            DEFAULT: '#0f172a',
+                            light: '#334155',
                         }
                     },
                     fontFamily: {
                         sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                        brush: ['Caveat Brush', 'Caveat', 'cursive'],
                     },
-                    boxShadow: {
-                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-                        'border': '0 0 0 1px rgba(0,0,0,0.05), 0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
                     }
                 }
             }
@@ -38,30 +49,39 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Caveat+Brush&display=swap" rel="stylesheet">
 
-    <!-- Lucide Icons (Fallback via FontAwesome) -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Three.js CDN for 3D Background Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #FDFCF8;
-            color: #0f172a;
+            background-color: #2513B8; /* Fallback */
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        .text-outline {
+            -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+            color: transparent;
         }
         /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #FDFCF8;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #2513B8; }
+        ::-webkit-scrollbar-thumb { background: #4a34e0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b58eb; }
+        
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none; /* Let clicks pass through to UI */
         }
     </style>
 </head>
@@ -77,18 +97,102 @@
 
     <!-- Main React Application Code -->
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // Configuration
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'vox-social-media-score';
         const apiKey = ""; 
 
         // Asset URLs
         const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox.png";
         const LOGO_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/vsllogo.png";
 
+        // --- THREE.JS BACKGROUND COMPONENT ---
+        const ThreeBackground = () => {
+            const mountRef = useRef(null);
+
+            useEffect(() => {
+                const scene = new THREE.Scene();
+                // Subtle fog to blend into the background
+                scene.fog = new THREE.FogExp2(0x2513B8, 0.0015);
+
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 30;
+
+                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                mountRef.current.appendChild(renderer.domElement);
+
+                // Create a sophisticated network geometry
+                const geometry = new THREE.BufferGeometry();
+                const particlesCount = 150;
+                const posArray = new Float32Array(particlesCount * 3);
+
+                for(let i = 0; i < particlesCount * 3; i++) {
+                    posArray[i] = (Math.random() - 0.5) * 80;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+                // Custom particle material (glowing dots)
+                const material = new THREE.PointsMaterial({
+                    size: 0.15,
+                    color: 0x00f0ff,
+                    transparent: true,
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const particlesMesh = new THREE.Points(geometry, material);
+                scene.add(particlesMesh);
+
+                // Add subtle slow rotation
+                let mouseX = 0;
+                let mouseY = 0;
+                
+                const handleMouseMove = (e) => {
+                    mouseX = (e.clientX / window.innerWidth) - 0.5;
+                    mouseY = (e.clientY / window.innerHeight) - 0.5;
+                };
+                window.addEventListener('mousemove', handleMouseMove);
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    // Slow idle rotation
+                    particlesMesh.rotation.y += 0.0005;
+                    particlesMesh.rotation.x += 0.0002;
+                    
+                    // Mouse parallax effect for the particles
+                    particlesMesh.position.x += (mouseX * 5 - particlesMesh.position.x) * 0.05;
+                    particlesMesh.position.y += (-mouseY * 5 - particlesMesh.position.y) * 0.05;
+
+                    renderer.render(scene, camera);
+                };
+
+                animate();
+
+                const handleResize = () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                };
+                window.addEventListener('resize', handleResize);
+
+                return () => {
+                    window.removeEventListener('mousemove', handleMouseMove);
+                    window.removeEventListener('resize', handleResize);
+                    mountRef.current?.removeChild(renderer.domElement);
+                    geometry.dispose();
+                    material.dispose();
+                    renderer.dispose();
+                };
+            }, []);
+
+            return <div id="canvas-container" ref={mountRef}></div>;
+        };
+
         function App() {
-            const [view, setView] = useState('landing'); // 'landing' | 'loading' | 'results'
+            const [view, setView] = useState('landing'); 
             const [profileUrl, setProfileUrl] = useState('');
             const [analyzingStep, setAnalyzingStep] = useState(0);
             const [leadSubmitted, setLeadSubmitted] = useState(false);
@@ -127,8 +231,8 @@
                 if (lower.includes('instagram.com')) return 'Instagram';
                 if (lower.includes('facebook.com')) return 'Facebook Page';
                 if (lower.includes('tiktok.com')) return 'TikTok';
-                if (lower.includes('linkedin.com')) return 'LinkedIn Company Page';
-                if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'YouTube Channel';
+                if (lower.includes('linkedin.com')) return 'LinkedIn';
+                if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'YouTube';
                 return 'Social Media Profile';
             };
 
@@ -141,30 +245,20 @@
                 
                 const systemPrompt = `You are a senior digital business auditor evaluating social media profiles for non-technical conventional business owners (aged 40-65).
 Use SIMPLE, friendly, professional, and easy-to-understand ENGLISH.
-DO NOT use technical marketing jargon like: CTR, CPM, Funnel Optimization, Audience Retention, Organic Velocity, Conversion Architecture, Marketing Attribution.
-STRONGLY PREFER simple business terms like: Customer Trust, Business Visibility, First Impression, Contact Readiness, Growth Opportunity, Customer Engagement, Business Presence.
-
-Provide a real, realistic, and honest critical analysis based on the provided profile URL.
 Output format must be pure JSON with the following structure without extra markdown:
 {
   "businessName": "Detected Business Name or Handle from URL",
-  "score": 40-95 (Random integer based on platform guess),
+  "score": 40-95,
   "label": "Excellent" (90-100) or "Very Good" (80-89) or "Good" (70-79) or "Fair" (60-69) or "Needs Attention" (below 60),
-  "summary": "One friendly summary line highlighting potential and main improvement areas (max 80 chars).",
-  "strengths": ["Max 3 main strengths in English starting with a checkmark (✓). Example: '✓ Business identity is very clear'"],
-  "opportunities": ["Max 3 improvement opportunities starting with a bullet (•). Example: '• Add a direct contact button'"],
-  "recommendations": [
-     "3 actionable recommendations. Each recommendation MUST be ONE sentence with a maximum of 20 words. Example: 'State your main service in the first line of your description so it is instantly visible.'"
-  ],
+  "summary": "One friendly summary line highlighting potential and main improvement areas (max 100 chars).",
+  "strengths": ["Max 3 main strengths in English starting with a checkmark (✓)."],
+  "opportunities": ["Max 3 improvement opportunities starting with a bullet (•)."],
+  "recommendations": ["3 actionable recommendations. Each MUST be ONE sentence with a maximum of 20 words."],
   "categories": {
-    "profileClarity": 25% weight (score 1-100),
-    "contentQuality": 25% weight (score 1-100),
-    "trustScore": 20% weight (score 1-100),
-    "customerEngagement": 15% weight (score 1-100),
-    "businessReadiness": 15% weight (score 1-100)
+    "profileClarity": 25, "contentQuality": 25, "trustScore": 20, "customerEngagement": 15, "businessReadiness": 15
   },
-  "growthPotential": "Low" or "Moderate" or "High" or "Very High",
-  "dataCoverage": 50-95 (Realistic data coverage percentage)
+  "growthPotential": "Low" | "Moderate" | "High" | "Very High",
+  "dataCoverage": 50-95
 }`;
 
                 const userQuery = `Analyze the ${platform} profile with URL: ${profileUrl}. Provide a digital business readiness report.`;
@@ -173,40 +267,27 @@ Output format must be pure JSON with the following structure without extra markd
                     let responseText = "";
                     let success = false;
                     
-                    if (apiKey || typeof __initial_auth_token !== 'undefined') {
-                        let delay = 1000;
-                        for (let attempt = 1; attempt <= 3; attempt++) {
-                            try {
-                                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        contents: [{ parts: [{ text: userQuery }] }],
-                                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                                        generationConfig: { responseMimeType: "application/json" }
-                                    })
-                                });
-                                
-                                if (response.ok) {
-                                    const data = await response.json();
-                                    responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                                    if (responseText) {
-                                        success = true;
-                                        break;
-                                    }
-                                }
-                            } catch (e) {}
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            delay *= 2;
-                        }
+                    if (apiKey) {
+                        try {
+                            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{ parts: [{ text: userQuery }] }],
+                                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                                    generationConfig: { responseMimeType: "application/json" }
+                                })
+                            });
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                                if (responseText) success = true;
+                            }
+                        } catch (e) {}
                     }
 
-                    let finalData;
-                    if (success && responseText) {
-                        finalData = JSON.parse(responseText);
-                    } else {
-                        finalData = generateSimulatedResults(profileUrl, platform);
-                    }
+                    let finalData = success ? JSON.parse(responseText) : generateSimulatedResults(profileUrl, platform);
 
                     setTimeout(() => {
                         setAnalysisResults(finalData);
@@ -214,71 +295,35 @@ Output format must be pure JSON with the following structure without extra markd
                     }, 1500);
 
                 } catch (error) {
-                    const fallback = generateSimulatedResults(profileUrl, platform);
-                    setAnalysisResults(fallback);
+                    setAnalysisResults(generateSimulatedResults(profileUrl, platform));
                     setView('results');
                 }
             };
 
             const generateSimulatedResults = (url, platform) => {
-                let handle = "Your Business";
-                try {
-                    const cleanUrl = url.replace(/^(https?:\/\/)?(www\.)?/, '');
-                    const parts = cleanUrl.split('/');
-                    if (parts.length > 1 && parts[1].trim() !== '') {
-                        handle = "@" + parts[1].split('?')[0];
-                    }
-                } catch(e) {}
-
                 const hash = url.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                const score = 65 + (hash % 25); 
+                const score = 68 + (hash % 24); 
                 
-                let label = "Good";
-                let summary = "Your profile shows a fairly strong foundation with some key opportunities for improvement.";
-                if (score >= 90) {
-                    label = "Excellent";
-                    summary = "Your digital business presence is outstanding and highly prepared to attract new customers.";
-                } else if (score >= 80) {
-                    label = "Very Good";
-                    summary = "Your profile is well-managed and has high potential to grow your customer base.";
-                } else if (score >= 70) {
-                    label = "Good";
-                    summary = "Your business foundation is solid, but there are communication gaps to optimize.";
-                } else {
-                    label = "Fair";
-                    summary = "Crucial improvements to your profile will immediately boost potential customer trust.";
-                }
-
-                const allRecs = [
-                    `Simplify your profile description so customers know your main solution in under 5 seconds.`,
-                    `Add a direct contact link (like WhatsApp) to make it easier for buyers to order.`,
-                    `Use a contrasting background color for your logo so your business name is easily recognizable.`,
-                    `Clearly state your operating hours or physical location in your basic profile information.`,
-                    `Create weekly content specifically answering the most frequently asked questions by your potential customers.`
-                ];
-
-                const selectedRecs = [
-                    allRecs[hash % allRecs.length],
-                    allRecs[(hash + 1) % allRecs.length],
-                    allRecs[(hash + 2) % allRecs.length]
-                ];
-
                 return {
-                    businessName: handle,
+                    businessName: "Your Business Profile",
                     score: score,
-                    label: label,
-                    summary: summary,
+                    label: score >= 90 ? "Excellent" : score >= 80 ? "Very Good" : score >= 70 ? "Good" : "Fair",
+                    summary: "Your profile has a solid foundation. Focusing on clear calls-to-action will immediately boost trust and conversions.",
                     strengths: [
-                        "✓ Visual identity of the business name looks consistent",
-                        "✓ Use of an easily recognizable profile picture",
-                        "✓ Presentation of main products captures attention well"
+                        "✓ Visual identity looks mostly consistent",
+                        "✓ Product presentation is clear",
+                        "✓ Profile is active and reachable"
                     ],
                     opportunities: [
-                        "• Call-to-Action needs to be much clearer",
-                        "• Contact information and order links are not prominent",
-                        "• Frequency of customer interaction can be improved"
+                        "• Direct contact links are hard to find",
+                        "• Bio description lacks a strong value proposition",
+                        "• Customer engagement strategy needs optimization"
                     ],
-                    recommendations: selectedRecs,
+                    recommendations: [
+                        "Simplify your bio so customers understand your exact service in under 5 seconds.",
+                        "Add a prominent WhatsApp or booking link directly in your profile.",
+                        "Create pinned content highlighting customer reviews and FAQs."
+                    ],
                     categories: {
                         profileClarity: 70 + (hash % 20),
                         contentQuality: 65 + ((hash + 2) % 25),
@@ -286,45 +331,18 @@ Output format must be pure JSON with the following structure without extra markd
                         customerEngagement: 55 + ((hash + 6) % 35),
                         businessReadiness: 50 + ((hash + 8) % 40)
                     },
-                    growthPotential: score > 85 ? "Very High" : score > 75 ? "High" : "Moderate",
-                    dataCoverage: 75 + (hash % 18)
+                    growthPotential: score > 80 ? "High" : "Moderate",
+                    dataCoverage: 82 + (hash % 15)
                 };
             };
 
-            const handleLeadSubmit = (e) => {
-                e.preventDefault();
-                setLeadSubmitted(true);
-            };
-
-            const resetAnalyzer = () => {
-                setProfileUrl('');
-                setLeadSubmitted(false);
-                setLeadData({ name: '', email: '', company: '', phone: '' });
-                setView('landing');
-            };
-
             return (
-                <div className="min-h-screen flex flex-col font-sans">
+                <div className="min-h-screen flex flex-col font-sans bg-vox-bg text-white relative">
                     
-                    {/* Modern Clean Header */}
-                    <header className="border-b border-gray-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-                        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-                            <div className="flex items-center gap-3 cursor-pointer" onClick={resetAnalyzer}>
-                                <img src={LOGO_URL} alt="VSL Logo" className="h-10 w-auto object-contain rounded-full border border-gray-100" onError={(e) => { e.target.style.display = 'none'; }} />
-                                <span className="font-extrabold text-2xl tracking-tighter text-brand">VOX<span className="text-gray-400 font-medium">SOCIAL</span></span>
-                            </div>
-                            <div className="hidden sm:flex items-center gap-8 text-sm font-semibold text-gray-500">
-                                <span className="hover:text-brand cursor-pointer transition-colors">Features</span>
-                                <span className="hover:text-brand cursor-pointer transition-colors">Methodology</span>
-                                <span className="hover:text-brand cursor-pointer transition-colors">Case Studies</span>
-                            </div>
-                            <button onClick={resetAnalyzer} className="text-sm bg-brand hover:bg-brand-light text-white font-bold py-2.5 px-6 rounded-full transition duration-300 shadow-sm">
-                                New Scan
-                            </button>
-                        </div>
-                    </header>
+                    {/* Only show 3D Background on landing */}
+                    {view === 'landing' && <ThreeBackground />}
 
-                    <main className="flex-grow">
+                    <main className="flex-grow flex flex-col relative z-10">
                         {view === 'landing' && (
                             <LandingSection 
                                 profileUrl={profileUrl} 
@@ -334,10 +352,7 @@ Output format must be pure JSON with the following structure without extra markd
                         )}
 
                         {view === 'loading' && (
-                            <LoadingSection 
-                                currentStep={analyzingStep} 
-                                steps={analysisSteps} 
-                            />
+                            <LoadingSection currentStep={analyzingStep} steps={analysisSteps} />
                         )}
 
                         {view === 'results' && analysisResults && (
@@ -345,148 +360,173 @@ Output format must be pure JSON with the following structure without extra markd
                                 results={analysisResults} 
                                 url={profileUrl}
                                 platform={detectPlatform(profileUrl)}
-                                leadSubmitted={leadSubmitted}
-                                leadData={leadData}
-                                setLeadData={setLeadData}
-                                handleLeadSubmit={handleLeadSubmit}
-                                resetAnalyzer={resetAnalyzer}
+                                setView={setView}
                             />
                         )}
                     </main>
-
-                    <footer className="bg-white border-t border-gray-200 text-gray-500 py-12 px-6 text-center text-sm">
-                        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-                            <div className="flex items-center gap-3">
-                                <img src={LOGO_URL} className="h-8 w-auto grayscale opacity-60" onError={(e) => { e.target.style.display = 'none'; }} />
-                                <p className="font-bold text-gray-900">Vox Social Score &copy; {new Date().getFullYear()}</p>
-                            </div>
-                            <p className="max-w-md text-xs text-gray-400 font-medium">
-                                This self-evaluation tool is designed purely to help traditional business owners grow. We maintain the confidentiality of your public data.
-                            </p>
-                        </div>
-                    </footer>
                 </div>
             );
         }
 
         // ==========================================
-        // 1. LANDING / HERO VIEW (Modern & Clean)
+        // 1. LANDING VIEW (Perfect Replica)
         // ==========================================
         function LandingSection({ profileUrl, setProfileUrl, handleAnalyze }) {
-            const [selectedPlatform, setSelectedPlatform] = useState('Instagram');
-            
-            const platforms = [
-                { name: 'Instagram', icon: 'fa-brands fa-instagram', placeholder: 'instagram.com/your_business' },
-                { name: 'Facebook', icon: 'fa-brands fa-facebook', placeholder: 'facebook.com/yourbusinesspage' },
-                { name: 'TikTok', icon: 'fa-brands fa-tiktok', placeholder: 'tiktok.com/@your_business' },
-                { name: 'LinkedIn', icon: 'fa-brands fa-linkedin', placeholder: 'linkedin.com/company/your-company' },
-            ];
+            const mascotRef = useRef(null);
 
-            const currentPlaceholder = platforms.find(p => p.name === selectedPlatform)?.placeholder || 'Enter your business profile URL';
+            // 3D Parallax effect for the Mascot
+            useEffect(() => {
+                const handleMouseMove = (e) => {
+                    if (!mascotRef.current) return;
+                    const x = (window.innerWidth / 2 - e.pageX) / 40;
+                    const y = (window.innerHeight / 2 - e.pageY) / 40;
+                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.02, 1.02, 1.02)`;
+                };
+                window.addEventListener('mousemove', handleMouseMove);
+                return () => window.removeEventListener('mousemove', handleMouseMove);
+            }, []);
 
             return (
-                <div className="relative overflow-hidden min-h-[85vh] flex items-center justify-center py-16 px-4 sm:px-6">
-                    {/* Minimalist abstract shapes */}
-                    <div className="absolute top-20 -left-20 w-72 h-72 rounded-full border border-gray-200/60 pointer-events-none"></div>
-                    <div className="absolute -bottom-20 right-10 w-[500px] h-[500px] rounded-full border border-gray-200/60 pointer-events-none"></div>
-
-                    <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
-                        
-                        {/* LEFT: Content and Input */}
-                        <div className="space-y-10 order-2 lg:order-1">
-                            <div className="space-y-6">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-bold tracking-wider text-gray-600 shadow-sm">
-                                    <span className="relative flex h-2.5 w-2.5">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                                    </span>
-                                    INSTANT BUSINESS HEALTH CHECK
-                                </div>
-                                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tighter text-brand">
-                                    Social Media <br />
-                                    <span className="text-gray-400">Health Check.</span>
-                                </h1>
-                                <p className="text-lg text-gray-600 max-w-lg font-medium leading-relaxed">
-                                    Discover how easily potential customers trust and buy from your social media profile. <span className="font-bold text-brand">100% free, no login required.</span>
-                                </p>
+                <div className="min-h-screen w-full flex flex-col relative font-sans overflow-hidden">
+                    
+                    {/* Header NavBar */}
+                    <nav className="flex items-center justify-between px-6 sm:px-12 py-6 w-full max-w-[1600px] mx-auto text-white z-20 animate-fade-in-up">
+                        <div className="flex items-center gap-3 font-extrabold text-xl tracking-tight">
+                            <div className="w-10 h-10 rounded-full bg-vox-btn flex items-center justify-center shadow-lg border border-white/10">
+                                <img src={LOGO_URL} className="w-8 h-8 rounded-full object-contain" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
                             </div>
-
-                            <div className="space-y-4">
-                                <div className="flex gap-2">
-                                    {platforms.map((p) => (
-                                        <button
-                                            key={p.name}
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                setSelectedPlatform(p.name);
-                                            }}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 border ${
-                                                selectedPlatform === p.name 
-                                                ? 'bg-brand text-white border-brand shadow-md' 
-                                                : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                            }`}
-                                        >
-                                            <i className={p.icon}></i>
-                                            <span className="hidden sm:inline">{p.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <form onSubmit={handleAnalyze} className="relative">
-                                    <div className="flex flex-col sm:flex-row gap-3 bg-white p-2 rounded-2xl border border-gray-200 shadow-soft">
-                                        <div className="relative flex-grow flex items-center">
-                                            <i className="fa-solid fa-link absolute left-4 text-gray-400"></i>
-                                            <input 
-                                                type="url" 
-                                                required
-                                                placeholder={currentPlaceholder}
-                                                value={profileUrl}
-                                                onChange={(e) => setProfileUrl(e.target.value)}
-                                                className="w-full bg-transparent text-brand font-medium pl-12 pr-4 py-4 rounded-xl focus:outline-none text-base placeholder-gray-400"
-                                            />
-                                        </div>
-                                        <button 
-                                            type="submit" 
-                                            className="bg-brand hover:bg-brand-light text-white font-bold px-8 py-4 rounded-xl transition duration-200 flex items-center justify-center gap-3 shrink-0 shadow-sm"
-                                        >
-                                            Analyze Profile
-                                            <i className="fa-solid fa-arrow-right"></i>
-                                        </button>
-                                    </div>
-                                    <p className="text-xs text-gray-400 font-medium mt-4 flex items-center gap-2">
-                                        <i className="fa-solid fa-lock"></i>
-                                        We only read public data. We never ask for passwords or API keys.
-                                    </p>
-                                </form>
-                            </div>
+                            VOXLUMEDIA
                         </div>
+                        <div className="hidden lg:flex gap-10 text-[15px] font-medium text-white/90">
+                            <span className="cursor-pointer hover:text-white transition-colors relative group">How It Works
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
+                            </span>
+                            <span className="cursor-pointer hover:text-white transition-colors relative group">Why It Matters
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
+                            </span>
+                            <span className="cursor-pointer hover:text-white transition-colors relative group">Features
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
+                            </span>
+                            <span className="cursor-pointer hover:text-white transition-colors relative group">Examples
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
+                            </span>
+                            <span className="cursor-pointer hover:text-white transition-colors relative group">Pricing
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all group-hover:w-full"></span>
+                            </span>
+                        </div>
+                        <button className="border border-white/30 rounded-full px-6 py-2.5 text-sm font-semibold hover:bg-white/10 hover:border-white transition-all duration-300 hidden sm:block backdrop-blur-sm">
+                            Book Free Consultation &rarr;
+                        </button>
+                    </nav>
 
-                        {/* RIGHT: Visual / Mascot */}
-                        <div className="flex justify-center items-center order-1 lg:order-2">
-                            <div className="relative w-full max-w-md">
-                                <div className="absolute inset-0 bg-gray-200/50 rounded-[3rem] transform rotate-3 scale-105"></div>
+                    {/* Hero Section */}
+                    <div className="flex-grow flex flex-col lg:flex-row items-center justify-center max-w-[1500px] mx-auto px-6 py-4 gap-8 lg:gap-16 relative w-full z-10">
+                        
+                        {/* LEFT: Mascot */}
+                        <div className="w-full lg:w-5/12 flex justify-center relative perspective-1000">
+                            <div className="relative w-full max-w-[320px] sm:max-w-[450px] animate-float transition-transform duration-200 ease-out z-20" ref={mascotRef}>
+                                {/* Glow behind mascot */}
+                                <div className="absolute inset-0 bg-blue-400/20 blur-[100px] rounded-full"></div>
                                 <img 
                                     src={MASCOT_URL} 
                                     alt="Vox Mascot" 
-                                    className="relative z-10 w-full h-auto object-contain drop-shadow-2xl hover:-translate-y-2 transition-transform duration-500"
+                                    className="w-full h-auto drop-shadow-2xl"
                                     onError={(e) => {
                                         e.target.src = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=500";
                                         e.target.className = "rounded-[3rem] shadow-2xl grayscale";
                                     }}
                                 />
-                                {/* Floating Badge */}
-                                <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-2xl border border-gray-100 shadow-xl flex items-center gap-4 z-20 animate-bounce" style={{animationDuration: '3s'}}>
-                                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                                        <i className="fa-solid fa-chart-pie text-xl"></i>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-400 font-bold uppercase">Average Score</p>
-                                        <p className="text-xl font-black text-brand">82/100</p>
-                                    </div>
-                                </div>
                             </div>
                         </div>
+
+                        {/* RIGHT: Typography & Input Area */}
+                        <div className="w-full lg:w-7/12 text-white space-y-8 text-center lg:text-left z-20 mt-8 lg:mt-0 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                            
+                            <div className="space-y-4">
+                                <h1 className="text-[3.5rem] sm:text-7xl lg:text-[7.5rem] font-black uppercase leading-[0.9] tracking-tighter relative inline-block">
+                                    VOX SOCIAL <br />
+                                    MEDIA <span className="absolute font-brush text-vox-btn text-[0.8em] tracking-normal normal-case -rotate-[5deg] -right-4 lg:-right-24 bottom-2 lg:-bottom-2 drop-shadow-lg opacity-90 z-30">Score</span>
+                                </h1>
+                                <p className="text-base sm:text-[22px] font-medium text-white/90 max-w-lg mx-auto lg:mx-0 leading-snug pt-6">
+                                    Get a clear picture of your social media presence and discover growth opportunities.
+                                </p>
+                            </div>
+
+                            {/* Search Input Bar */}
+                            <form onSubmit={handleAnalyze} className="relative max-w-xl mx-auto lg:mx-0 pt-2">
+                                <div className="flex flex-col sm:flex-row gap-2 bg-white p-2 rounded-[2rem] sm:rounded-full shadow-2xl hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-shadow duration-300">
+                                    <div className="relative flex-grow flex items-center px-4">
+                                        <i className="fa-solid fa-link text-gray-400 text-lg"></i>
+                                        <input 
+                                            type="url" 
+                                            required
+                                            value={profileUrl}
+                                            onChange={(e) => setProfileUrl(e.target.value)}
+                                            placeholder="Paste your public social media URL here"
+                                            className="w-full bg-transparent text-gray-800 font-medium pl-4 pr-2 py-4 focus:outline-none text-base placeholder-gray-400"
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        className="bg-vox-btn hover:bg-black text-white font-semibold px-8 py-4 rounded-full transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 group"
+                                    >
+                                        Check My Score <i className="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                                    </button>
+                                </div>
+                            </form>
+
+                            {/* Trust Elements */}
+                            <div className="space-y-6 pt-4">
+                                <div className="flex flex-col sm:flex-row items-center gap-4 text-[15px] font-medium text-white/90 justify-center lg:justify-start">
+                                    <span>Works with:</span>
+                                    <div className="flex gap-5 text-2xl">
+                                        <i className="fa-brands fa-instagram hover:-translate-y-1 transition-transform cursor-pointer"></i>
+                                        <i className="fa-brands fa-facebook hover:-translate-y-1 transition-transform cursor-pointer"></i>
+                                        <i className="fa-brands fa-tiktok hover:-translate-y-1 transition-transform cursor-pointer"></i>
+                                        <i className="fa-brands fa-linkedin hover:-translate-y-1 transition-transform cursor-pointer"></i>
+                                        <i className="fa-brands fa-youtube hover:-translate-y-1 transition-transform cursor-pointer"></i>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-3 text-sm font-medium text-white/80">
+                                    <span className="flex items-center gap-2"><div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"><i className="fa-solid fa-lock text-[10px]"></i></div> No login required</span>
+                                    <span className="flex items-center gap-2"><div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"><i className="fa-solid fa-shield text-[10px]"></i></div> 100% safe & private</span>
+                                    <span className="flex items-center gap-2"><div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"><i className="fa-regular fa-eye text-[10px]"></i></div> We only read public information</span>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
+
+                    {/* Bottom White Features Section */}
+                    <div className="bg-white text-gray-900 rounded-t-[3rem] sm:rounded-t-[4rem] w-full mt-12 lg:mt-auto relative z-30 pt-16 pb-10 px-6 shadow-[0_-20px_50px_rgba(0,0,0,0.2)] animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-10">
+                            {[
+                                { icon: 'fa-solid fa-link', title: 'Enter Your Link', desc: 'Paste any public social media profile URL.' },
+                                { icon: 'fa-solid fa-magnifying-glass', title: 'We Analyze', desc: 'Our system reviews key elements of your profile.' },
+                                { icon: 'fa-solid fa-chart-simple', title: 'Get Your Score', desc: 'See your score across 5 business-focused areas.' },
+                                { icon: 'fa-regular fa-lightbulb', title: 'Get Recommendations', desc: 'Receive simple and actionable improvement tips.' },
+                                { icon: 'fa-solid fa-rocket', title: 'Grow Your Business', desc: 'Improve your presence and attract more customers.' }
+                            ].map((step, i) => (
+                                <div key={i} className="flex flex-col items-center text-center gap-4 group cursor-default">
+                                    <div className="w-16 h-16 rounded-full bg-vox-bg text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 group-hover:bg-vox-btn transition-all duration-300">
+                                        <i className={step.icon}></i>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-extrabold text-[#111827] text-lg mb-2">{step.title}</h4>
+                                        <p className="text-[14px] text-gray-500 font-medium leading-relaxed max-w-[220px] mx-auto">{step.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="text-center mt-12 pt-8 border-t border-gray-100">
+                            <p className="text-sm font-semibold text-vox-bg">
+                                Built for business owners. <span className="border-b-2 border-vox-bg pb-0.5">Focused on growth.</span>
+                            </p>
+                        </div>
+                    </div>
+
                 </div>
             );
         }
@@ -498,38 +538,40 @@ Output format must be pure JSON with the following structure without extra markd
             const progressPercentage = Math.round(((currentStep + 1) / steps.length) * 100);
 
             return (
-                <div className="min-h-[70vh] flex flex-col items-center justify-center py-12 px-6">
-                    <div className="max-w-md w-full bg-white p-10 rounded-3xl border border-gray-200 shadow-soft text-center space-y-8">
+                <div className="min-h-screen bg-vox-bg flex flex-col items-center justify-center p-6 relative z-10">
+                    <div className="max-w-md w-full bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 shadow-2xl text-center space-y-8 animate-fade-in-up">
                         
-                        <div className="relative w-24 h-24 mx-auto">
-                            <div className="absolute inset-0 rounded-full border-4 border-gray-100"></div>
-                            <div className="absolute inset-0 rounded-full border-4 border-t-brand border-r-brand animate-spin"></div>
+                        <div className="relative w-28 h-28 mx-auto">
+                            <div className="absolute inset-0 rounded-full border-4 border-white/20"></div>
+                            <div className="absolute inset-0 rounded-full border-4 border-t-white border-r-white animate-spin"></div>
                             <div className="absolute inset-2 flex items-center justify-center">
-                                <i className="fa-solid fa-magnifying-glass-chart text-brand text-2xl"></i>
+                                <i className="fa-solid fa-robot text-white text-3xl animate-pulse"></i>
                             </div>
                         </div>
 
                         <div>
-                            <h2 className="text-2xl font-black text-brand mb-2">Analyzing Profile</h2>
-                            <p className="text-gray-500 font-medium text-sm">
-                                Please wait while our system maps your digital business presence...
+                            <h2 className="text-2xl font-black text-white mb-2">Analyzing Profile</h2>
+                            <p className="text-white/70 font-medium text-sm">
+                                Extracting public insights via Vox AI...
                             </p>
                         </div>
 
                         <div className="space-y-3">
-                            <div className="flex justify-between text-xs font-bold text-gray-400">
-                                <span>AUDIT PROGRESS</span>
-                                <span className="text-brand">{progressPercentage}%</span>
+                            <div className="flex justify-between text-xs font-bold text-white/70">
+                                <span>PROGRESS</span>
+                                <span className="text-white">{progressPercentage}%</span>
                             </div>
-                            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-black/30 h-2 rounded-full overflow-hidden">
                                 <div 
-                                    className="bg-brand h-full rounded-full transition-all duration-500 ease-out" 
+                                    className="bg-white h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden" 
                                     style={{ width: `${progressPercentage}%` }}
-                                ></div>
+                                >
+                                    <div className="absolute top-0 left-0 bottom-0 w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] animate-[shimmer_1.5s_infinite]"></div>
+                                </div>
                             </div>
                             
-                            <div className="pt-2 text-xs font-bold text-brand h-8 flex items-center justify-center">
-                                <span className="animate-pulse">{steps[currentStep]}</span>
+                            <div className="pt-3 text-xs font-bold text-white/90 h-8 flex items-center justify-center">
+                                <span>{steps[currentStep]}</span>
                             </div>
                         </div>
                     </div>
@@ -538,263 +580,195 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 3. RESULTS DASHBOARD (Modern Clean Layout)
+        // 3. RESULTS DASHBOARD (Sophisticated Summary)
         // ==========================================
-        function ResultsSection({ results, url, platform, leadSubmitted, leadData, setLeadData, handleLeadSubmit, resetAnalyzer }) {
-            
-            const getScoreColor = (score) => {
-                if (score >= 90) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
-                if (score >= 80) return 'text-indigo-600 bg-indigo-50 border-indigo-200';
-                if (score >= 70) return 'text-amber-500 bg-amber-50 border-amber-200';
-                return 'text-rose-500 bg-rose-50 border-rose-200';
+        function ResultsSection({ results, url, platform, setView }) {
+            const [leadSubmitted, setLeadSubmitted] = useState(false);
+            const [leadData, setLeadData] = useState({ name: '', email: '', phone: '' });
+
+            const handleLeadSubmit = (e) => {
+                e.preventDefault();
+                setLeadSubmitted(true);
             };
 
-            const getProgressColor = (score) => {
-                if (score >= 90) return 'bg-emerald-500';
-                if (score >= 80) return 'bg-indigo-500';
-                if (score >= 70) return 'bg-amber-500';
-                return 'bg-rose-500';
+            const getScoreColor = (score) => {
+                if (score >= 90) return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
+                if (score >= 80) return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+                if (score >= 70) return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
+                return 'text-rose-400 bg-rose-400/10 border-rose-400/20';
             };
 
             return (
-                <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 space-y-8">
+                <div className="min-h-screen bg-[#FDFCF8] text-gray-900 w-full relative z-20 pb-20">
                     
-                    {/* Header / Summary Card */}
-                    <div className="bg-white rounded-[2rem] border border-gray-200 p-8 sm:p-12 shadow-soft grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
+                    {/* Header bar matching landing style but light mode */}
+                    <nav className="bg-vox-bg text-white px-6 sm:px-12 py-5 sticky top-0 z-50 shadow-md">
+                        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-3 font-extrabold text-xl cursor-pointer" onClick={() => setView('landing')}>
+                                <img src={LOGO_URL} className="w-8 h-8 rounded-full bg-white p-0.5" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
+                                VOXLUMEDIA
+                            </div>
+                            <button onClick={() => setView('landing')} className="text-sm border border-white/30 hover:bg-white hover:text-vox-bg font-bold py-2 px-5 rounded-full transition duration-300">
+                                New Scan
+                            </button>
+                        </div>
+                    </nav>
+
+                    <div className="max-w-5xl mx-auto py-12 px-6 space-y-10 animate-fade-in-up">
                         
-                        {/* Score Circle */}
-                        <div className="md:col-span-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 pb-8 md:pb-0">
-                            <span className="text-xs font-black tracking-widest text-gray-400 mb-6">BUSINESS SCORE</span>
-                            <div className="relative w-48 h-48 flex items-center justify-center mb-6">
-                                <svg className="absolute w-full h-full transform -rotate-90">
-                                    <circle cx="96" cy="96" r="88" stroke="#f1f5f9" strokeWidth="16" fill="transparent" />
-                                    <circle 
-                                        cx="96" cy="96" r="88" 
-                                        stroke={results.score >= 90 ? "#10b981" : results.score >= 80 ? "#6366f1" : results.score >= 70 ? "#f59e0b" : "#f43f5e"} 
-                                        strokeWidth="16" fill="transparent" strokeDasharray={553}
-                                        strokeDashoffset={553 - (553 * results.score) / 100}
-                                        strokeLinecap="round" className="transition-all duration-1000 ease-out"
-                                    />
-                                </svg>
-                                <div className="text-center relative z-10 flex flex-col items-center">
-                                    <span className="text-6xl font-black text-brand tracking-tighter">{results.score}</span>
-                                    <span className="text-sm font-bold text-gray-400">out of 100</span>
-                                </div>
+                        {/* PERFORMANCE SUMMARY SECTION (Requested) */}
+                        <div className="bg-white rounded-[2rem] border border-gray-200 p-8 sm:p-12 shadow-xl relative overflow-hidden">
+                            {/* Abstract bg element */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-vox-bg/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+                            <div className="text-center mb-10 relative z-10">
+                                <span className="text-xs font-black tracking-widest text-vox-accent uppercase mb-2 block">Performance Summary</span>
+                                <h2 className="text-3xl sm:text-4xl font-black text-gray-900">Your Business Health Report</h2>
+                                <p className="text-gray-500 font-medium mt-2 flex items-center justify-center gap-2">
+                                    <i className="fa-solid fa-chart-pie"></i> {platform} Analysis
+                                </p>
                             </div>
-                            <span className={`px-5 py-2 rounded-full text-sm font-black border uppercase tracking-wider ${getScoreColor(results.score)}`}>
-                                {results.label}
-                            </span>
-                        </div>
 
-                        {/* Narrative */}
-                        <div className="md:col-span-8 space-y-6">
-                            <div>
-                                <div className="flex items-center gap-2 text-brand-accent font-bold text-sm mb-2">
-                                    <i className="fa-regular fa-id-card"></i>
-                                    <span>{platform} • {results.businessName}</span>
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center relative z-10">
+                                {/* Score Circle */}
+                                <div className="md:col-span-5 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 pb-8 md:pb-0">
+                                    <div className="relative w-48 h-48 flex items-center justify-center mb-6">
+                                        <svg className="absolute w-full h-full transform -rotate-90">
+                                            <circle cx="96" cy="96" r="88" stroke="#f1f5f9" strokeWidth="16" fill="transparent" />
+                                            <circle 
+                                                cx="96" cy="96" r="88" 
+                                                stroke={results.score >= 90 ? "#34d399" : results.score >= 80 ? "#60a5fa" : results.score >= 70 ? "#fbbf24" : "#fb7185"} 
+                                                strokeWidth="16" fill="transparent" strokeDasharray={553}
+                                                strokeDashoffset={553 - (553 * results.score) / 100}
+                                                strokeLinecap="round" className="transition-all duration-1500 ease-out"
+                                            />
+                                        </svg>
+                                        <div className="text-center relative z-10 flex flex-col items-center mt-2">
+                                            <span className="text-6xl font-black text-gray-900 tracking-tighter">{results.score}</span>
+                                            <span className="text-sm font-bold text-gray-400 uppercase mt-1">Score</span>
+                                        </div>
+                                    </div>
+                                    <span className={`px-6 py-2 rounded-full text-sm font-black border uppercase tracking-wider ${getScoreColor(results.score).replace('text-', 'text-').replace('bg-', 'bg-').replace('border-', 'border-')}`}>
+                                        {results.label}
+                                    </span>
                                 </div>
-                                <h2 className="text-3xl sm:text-4xl font-black text-brand tracking-tight">Social Media Health Report</h2>
-                            </div>
-                            
-                            <p className="text-gray-600 font-medium text-lg leading-relaxed bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                                "{results.summary}"
-                            </p>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
-                                <div className="p-4 rounded-2xl border border-gray-100">
-                                    <p className="text-[10px] text-gray-400 font-black uppercase mb-1">Growth Potential</p>
-                                    <p className="text-base font-black text-brand">{results.growthPotential}</p>
-                                </div>
-                                <div className="p-4 rounded-2xl border border-gray-100">
-                                    <p className="text-[10px] text-gray-400 font-black uppercase mb-1">Data Coverage</p>
-                                    <p className="text-base font-black text-brand">{results.dataCoverage}%</p>
-                                </div>
-                                <div className="col-span-2 sm:col-span-1 p-4 rounded-2xl border border-gray-100">
-                                    <p className="text-[10px] text-gray-400 font-black uppercase mb-1">Audit Credibility</p>
-                                    <p className="text-base font-black text-emerald-600 flex items-center gap-2">
-                                        <i className="fa-solid fa-circle-check"></i>
-                                        {results.dataCoverage >= 80 ? 'High' : results.dataCoverage >= 60 ? 'Medium' : 'Fair'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    {/* Two Columns: Strengths & Opportunities */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Strengths */}
-                        <div className="bg-white rounded-[2rem] border border-gray-200 p-8 shadow-soft">
-                            <h3 className="text-xl font-black text-brand mb-1 flex items-center gap-3">
-                                <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm"><i className="fa-solid fa-check"></i></span>
-                                Key Strengths
-                            </h3>
-                            <p className="text-sm text-gray-400 font-medium mb-6 ml-11">What you're already doing great.</p>
-                            
-                            <ul className="space-y-3 ml-11">
-                                {results.strengths.map((item, index) => (
-                                    <li key={index} className="flex items-start gap-3">
-                                        <i className="fa-solid fa-circle-check text-emerald-500 mt-1"></i>
-                                        <span className="text-gray-700 font-medium text-base">{item.replace('✓', '').trim()}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Opportunities */}
-                        <div className="bg-white rounded-[2rem] border border-gray-200 p-8 shadow-soft">
-                            <h3 className="text-xl font-black text-brand mb-1 flex items-center gap-3">
-                                <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-sm"><i className="fa-solid fa-exclamation"></i></span>
-                                Priority Opportunities
-                            </h3>
-                            <p className="text-sm text-gray-400 font-medium mb-6 ml-11">Crucial gaps limiting potential buyers.</p>
-                            
-                            <ul className="space-y-3 ml-11">
-                                {results.opportunities.map((item, index) => (
-                                    <li key={index} className="flex items-start gap-3">
-                                        <i className="fa-solid fa-arrow-right text-amber-500 mt-1"></i>
-                                        <span className="text-gray-700 font-medium text-base">{item.replace('•', '').trim()}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-
-
-                    {/* Categories Breakdown */}
-                    <div className="bg-white rounded-[2rem] border border-gray-200 p-8 shadow-soft">
-                        <div className="mb-8">
-                            <h3 className="text-2xl font-black text-brand">Score Breakdown by Category</h3>
-                            <p className="text-gray-500 font-medium mt-1">Specific benchmarks evaluated from your public profile.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                            {[
-                                { title: 'Profile Clarity', score: results.categories.profileClarity, desc: 'How quickly customers understand your business.' },
-                                { title: 'Content Quality', score: results.categories.contentQuality, desc: 'Visual neatness and message consistency.' },
-                                { title: 'Trust Score', score: results.categories.trustScore, desc: 'Presence of reviews, website, and legal info.' },
-                                { title: 'Engagement', score: results.categories.customerEngagement, desc: 'Ease of inviting Q&A and active replies.' },
-                                { title: 'Readiness', score: results.categories.businessReadiness, desc: 'How practical the purchasing flow is.' }
-                            ].map((cat, i) => (
-                                <div key={i} className="flex flex-col border border-gray-100 rounded-2xl p-5 bg-gray-50/50">
-                                    <span className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">{cat.title}</span>
-                                    <p className="text-xs text-gray-500 font-medium mb-4 flex-grow">{cat.desc}</p>
+                                {/* Narrative Summary */}
+                                <div className="md:col-span-7 space-y-6">
+                                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                        <p className="text-gray-700 font-semibold text-lg leading-relaxed">
+                                            "{results.summary}"
+                                        </p>
+                                    </div>
                                     
-                                    <div>
-                                        <div className="flex items-baseline gap-1 mb-2">
-                                            <span className="text-2xl font-black text-brand">{cat.score}</span>
-                                            <span className="text-xs font-bold text-gray-400">/100</span>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-sm flex items-start gap-3">
+                                            <i className="fa-solid fa-arrow-trend-up text-vox-accent mt-1"></i>
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Growth Potential</p>
+                                                <p className="text-base font-black text-gray-900">{results.growthPotential}</p>
+                                            </div>
                                         </div>
-                                        <div className="w-full bg-gray-200 h-1.5 rounded-full">
-                                            <div className={`h-full rounded-full ${getProgressColor(cat.score)}`} style={{ width: `${cat.score}%` }}></div>
+                                        <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-sm flex items-start gap-3">
+                                            <i className="fa-solid fa-check-double text-emerald-500 mt-1"></i>
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Profile Readiness</p>
+                                                <p className="text-base font-black text-gray-900">{results.categories.businessReadiness}/100</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-
-
-                    {/* Recommendations */}
-                    <div className="bg-brand text-white rounded-[2rem] p-8 sm:p-10 shadow-lg">
-                        <div className="mb-8">
-                            <span className="text-xs text-emerald-400 font-black uppercase tracking-widest">Quick Actions</span>
-                            <h3 className="text-2xl sm:text-3xl font-black mt-2">Tactical Steps You Can Take Today</h3>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {results.recommendations.map((rec, i) => (
-                                <div key={i} className="bg-white/10 backdrop-blur-sm border border-white/10 p-6 rounded-2xl relative">
-                                    <div className="w-8 h-8 rounded-full bg-white text-brand font-black flex items-center justify-center text-sm mb-4">
-                                        {i+1}
-                                    </div>
-                                    <p className="text-base font-semibold text-gray-100 leading-relaxed">
-                                        {rec}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-
-                    {/* Lead Gen Section */}
-                    <div className="bg-white border-2 border-gray-900 rounded-[2rem] p-8 sm:p-12 shadow-2xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div className="space-y-6">
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-xs font-black tracking-widest text-brand uppercase">
-                                <i className="fa-solid fa-file-pdf"></i>
-                                Free Detailed Audit
                             </div>
-                            <h3 className="text-3xl sm:text-4xl font-black text-brand leading-tight tracking-tight">
-                                Want a Detailed Audit & Growth Strategy Session?
-                            </h3>
-                            <p className="text-gray-600 font-medium text-lg leading-relaxed">
-                                Get a manual review by our agency experts. We'll check every link and provide a clear roadmap to turn your profile into a customer-generating machine.
-                            </p>
-                            <ul className="space-y-3 font-bold text-sm text-gray-700">
-                                <li className="flex items-center gap-3"><i className="fa-solid fa-check text-emerald-500 text-lg"></i> 10+ page PDF report</li>
-                                <li className="flex items-center gap-3"><i className="fa-solid fa-check text-emerald-500 text-lg"></i> 30-minute private Zoom consultation</li>
-                                <li className="flex items-center gap-3"><i className="fa-solid fa-check text-emerald-500 text-lg"></i> Local competitor analysis</li>
-                            </ul>
                         </div>
 
-                        <div className="bg-gray-50 p-8 rounded-[1.5rem] border border-gray-200">
+                        {/* Breakdown Categories */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
+                                <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-check text-sm"></i></div>
+                                    Key Strengths
+                                </h3>
+                                <ul className="space-y-4">
+                                    {results.strengths.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-3 text-gray-600 font-medium">
+                                            <i className="fa-solid fa-circle-check text-emerald-500 mt-1"></i>
+                                            {item.replace('✓', '').trim()}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            
+                            <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
+                                <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center"><i className="fa-solid fa-lightbulb text-sm"></i></div>
+                                    Opportunities
+                                </h3>
+                                <ul className="space-y-4">
+                                    {results.opportunities.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-3 text-gray-600 font-medium">
+                                            <i className="fa-solid fa-arrow-right text-amber-500 mt-1"></i>
+                                            {item.replace('•', '').trim()}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Detailed Metrics */}
+                        <div className="bg-vox-bg text-white rounded-[2rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden">
+                            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+                            
+                            <h3 className="text-2xl font-black mb-8 relative z-10">Metric Breakdown</h3>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 relative z-10">
+                                {[
+                                    { label: 'Profile Clarity', score: results.categories.profileClarity, icon: 'fa-id-badge' },
+                                    { label: 'Content Quality', score: results.categories.contentQuality, icon: 'fa-image' },
+                                    { label: 'Trust Signals', score: results.categories.trustScore, icon: 'fa-shield-halved' }
+                                ].map((cat, i) => (
+                                    <div key={i} className="bg-white/10 backdrop-blur-sm border border-white/10 p-5 rounded-2xl">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-sm font-bold text-white/70 flex items-center gap-2"><i className={`fa-solid ${cat.icon}`}></i> {cat.label}</span>
+                                            <span className="text-xl font-black">{cat.score}</span>
+                                        </div>
+                                        <div className="w-full bg-black/30 h-1.5 rounded-full">
+                                            <div className="bg-white h-full rounded-full" style={{ width: `${cat.score}%` }}></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Lead Capture */}
+                        <div className="bg-white border border-gray-200 rounded-[2rem] p-8 sm:p-12 shadow-xl text-center">
                             {!leadSubmitted ? (
-                                <form onSubmit={handleLeadSubmit} className="space-y-5">
-                                    <div className="mb-2">
-                                        <h4 className="text-xl font-black text-brand">Book Your Free Call</h4>
-                                        <p className="text-sm text-gray-500 font-medium">Fill out the form below to get started.</p>
+                                <div className="max-w-xl mx-auto space-y-6">
+                                    <div className="w-16 h-16 bg-vox-bg/10 text-vox-bg rounded-full flex items-center justify-center mx-auto text-2xl mb-4">
+                                        <i className="fa-solid fa-file-pdf"></i>
                                     </div>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-xs font-black text-gray-500 uppercase tracking-wider block mb-1.5">Full Name</label>
-                                            <input type="text" required placeholder="John Doe" value={leadData.name} onChange={(e) => setLeadData({...leadData, name: e.target.value})} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-medium" />
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-xs font-black text-gray-500 uppercase tracking-wider block mb-1.5">Business Email</label>
-                                                <input type="email" required placeholder="john@company.com" value={leadData.email} onChange={(e) => setLeadData({...leadData, email: e.target.value})} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-medium" />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-black text-gray-500 uppercase tracking-wider block mb-1.5">Phone Number</label>
-                                                <input type="tel" required placeholder="+1 (555) 000-0000" value={leadData.phone} onChange={(e) => setLeadData({...leadData, phone: e.target.value})} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-medium" />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="text-xs font-black text-gray-500 uppercase tracking-wider block mb-1.5">Company Name</label>
-                                            <input type="text" required placeholder="Doe Bakery LLC" value={leadData.company} onChange={(e) => setLeadData({...leadData, company: e.target.value})} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent font-medium" />
-                                        </div>
-                                    </div>
-
-                                    <button type="submit" className="w-full bg-brand hover:bg-black text-white font-black py-4 rounded-xl shadow-md transition duration-200 text-base mt-2">
-                                        Request Full Report
-                                    </button>
-                                    <p className="text-[10px] text-center text-gray-400 font-medium">
-                                        Your data is secure. We never share your email or phone number with third parties.
-                                    </p>
-                                </form>
+                                    <h3 className="text-3xl font-black text-gray-900">Get Your Complete PDF Report</h3>
+                                    <p className="text-gray-500 font-medium">Enter your details to receive a full breakdown and an invitation to a free 30-minute growth consultation with our experts.</p>
+                                    
+                                    <form onSubmit={handleLeadSubmit} className="space-y-4 pt-4 text-left">
+                                        <input type="text" required placeholder="Your Name" className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-vox-accent bg-gray-50" />
+                                        <input type="email" required placeholder="Business Email" className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-vox-accent bg-gray-50" />
+                                        <button type="submit" className="w-full bg-vox-btn hover:bg-black text-white font-bold py-4 rounded-xl transition duration-300 shadow-md">
+                                            Send Me The Report &rarr;
+                                        </button>
+                                    </form>
+                                </div>
                             ) : (
-                                <div className="text-center py-10 px-4 space-y-4">
-                                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-                                        <i className="fa-solid fa-circle-check"></i>
+                                <div className="py-10 space-y-4">
+                                    <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl">
+                                        <i className="fa-solid fa-check"></i>
                                     </div>
-                                    <h4 className="text-2xl font-black text-brand">Request Sent!</h4>
-                                    <p className="text-gray-500 text-sm font-medium">
-                                        Thank you, <span className="font-bold text-brand">{leadData.name}</span>.
-                                    </p>
-                                    <p className="text-sm text-gray-600 leading-relaxed max-w-sm mx-auto">
-                                        Our senior consultants are preparing your detailed PDF analysis. We will contact you at <span className="font-bold text-brand">{leadData.phone}</span> within 24 hours to schedule your free consultation.
-                                    </p>
-                                    <button onClick={resetAnalyzer} className="text-brand font-bold text-sm border-b-2 border-brand hover:text-black hover:border-black mt-4 transition-colors">
-                                        Check Another Profile
-                                    </button>
+                                    <h4 className="text-3xl font-black text-gray-900">Success!</h4>
+                                    <p className="text-gray-500 font-medium max-w-md mx-auto">Your comprehensive report is being generated. Our team will reach out to you shortly to schedule your growth strategy session.</p>
                                 </div>
                             )}
                         </div>
-                    </div>
 
+                    </div>
                 </div>
             );
         }
