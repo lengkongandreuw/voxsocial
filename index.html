@@ -14,7 +14,8 @@
                 extend: {
                     colors: {
                         vox: {
-                            bg: '#2513B8', // Ungu/biru ikonik sesuai mockup
+                            bg: '#3b26be', // Gradasi atas
+                            bgBottom: '#170a70', // Gradasi bawah
                             btn: '#191046', // Tombol gelap dengan kontras tinggi
                             accent: '#4324c4',
                         },
@@ -61,15 +62,15 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #2513B8;
+            background-color: #170a70;
             color: #ffffff;
             overflow-x: hidden;
         }
         /* Kustomisasi scrollbar */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #2513B8; }
-        ::-webkit-scrollbar-thumb { background: #4a34e0; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b58eb; }
+        ::-webkit-scrollbar-track { background: #170a70; }
+        ::-webkit-scrollbar-thumb { background: #3b26be; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4a34e0; }
         
         #canvas-container {
             position: absolute;
@@ -99,9 +100,10 @@
         // Konfigurasi
         const apiKey = ""; 
 
-        // URL Aset Gambar - Diperbarui ke ryanvox_large.png versi raw github
+        // URL Aset Gambar
         const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox_large.png";
         const LOGO_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/vsllogo.png";
+        const HEADLINE_SVG_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/headlinevoxscore.svg";
 
         // --- KOMPONEN LATAR BELAKANG THREE.JS ---
         const ThreeBackground = () => {
@@ -109,7 +111,8 @@
 
             useEffect(() => {
                 const scene = new THREE.Scene();
-                scene.fog = new THREE.FogExp2(0x2513B8, 0.0015);
+                // Menyelaraskan warna fog dengan latar gradasi gelap bawah (#170a70)
+                scene.fog = new THREE.FogExp2(0x170a70, 0.0015);
 
                 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.z = 30;
@@ -347,7 +350,7 @@ Output format must be pure JSON with the following structure without extra markd
             };
 
             return (
-                <div className="min-h-screen flex flex-col font-sans bg-vox-bg text-white relative">
+                <div className="min-h-screen flex flex-col font-sans bg-gradient-to-b from-[#3b26be] to-[#170a70] text-white relative">
                     
                     {/* Tampilkan latar belakang 3D interaktif hanya di halaman utama */}
                     {view === 'landing' && <ThreeBackground />}
@@ -381,7 +384,7 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 1. LANDING VIEW (Mascot Dominant & Overlapping)
+        // 1. LANDING VIEW (Mascot Dominant & Headline SVG)
         // ==========================================
         function LandingSection({ profileUrl, setProfileUrl, handleAnalyze, inputError, setInputError }) {
             const mascotRef = useRef(null);
@@ -392,7 +395,7 @@ Output format must be pure JSON with the following structure without extra markd
                     if (!mascotRef.current) return;
                     const x = (window.innerWidth / 2 - e.pageX) / 45;
                     const y = (window.innerHeight / 2 - e.pageY) / 45;
-                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.2, 1.2, 1.2)`;
+                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.15, 1.15, 1.15)`;
                 };
                 window.addEventListener('mousemove', handleMouseMove);
                 return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -419,7 +422,7 @@ Output format must be pure JSON with the following structure without extra markd
                             <div 
                                 className="relative w-full max-w-[400px] sm:max-w-[560px] lg:max-w-[640px] animate-float transition-transform duration-300 ease-out" 
                                 ref={mascotRef}
-                                style={{ transform: 'scale3d(1.2, 1.2, 1.2)' }}
+                                style={{ transform: 'scale3d(1.15, 1.15, 1.15)' }}
                             >
                                 {/* Pijaran cahaya biru futuristik di belakang robot */}
                                 <div className="absolute inset-0 bg-blue-400/25 blur-[130px] rounded-full"></div>
@@ -431,14 +434,18 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
                         </div>
 
-                        {/* KANAN: Informasi Headline & Input Pencarian (z-10) */}
+                        {/* KANAN: Informasi Headline SVG & Input Pencarian (z-10) */}
                         <div className="w-full lg:w-7/12 text-white space-y-6 text-center lg:text-left z-10 mt-4 lg:mt-0 animate-fade-in-up" style={{animationDelay: '0.15s'}}>
                             
                             <div className="space-y-4">
-                                <h1 className="text-[3.2rem] sm:text-6xl lg:text-[6.8rem] font-black uppercase leading-[0.88] tracking-tighter relative inline-block">
-                                    VOX S<span className="inline-flex items-center justify-center w-[0.85em] h-[0.85em] rounded-full bg-[#191046] border border-white/20 overflow-hidden mx-0.5 align-middle shadow-lg"><img src={LOGO_URL} className="w-full h-full object-cover scale-110" /></span>CIAL <br />
-                                    MEDIA <span className="absolute font-brush text-vox-btn text-[0.8em] tracking-normal normal-case -rotate-[5deg] -right-2 lg:-right-20 bottom-1 lg:-bottom-2 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] opacity-95 z-30">Score</span>
-                                </h1>
+                                {/* Headline Digantikan dengan SVG Headline Khusus */}
+                                <div className="max-w-md sm:max-w-lg lg:max-w-[540px] mx-auto lg:mx-0">
+                                    <img 
+                                        src={HEADLINE_SVG_URL} 
+                                        alt="Vox Social Media Score" 
+                                        className="w-full h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] pointer-events-none"
+                                    />
+                                </div>
                                 <p className="text-base sm:text-[20px] font-medium text-white/90 max-w-lg mx-auto lg:mx-0 leading-snug pt-3">
                                     Get a clear picture of your Instagram presence and discover growth opportunities.
                                 </p>
@@ -727,7 +734,7 @@ Output format must be pure JSON with the following structure without extra markd
                         </div>
 
                         {/* Detailed Metrics */}
-                        <div className="bg-vox-bg text-white rounded-[2rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden">
+                        <div className="bg-gradient-to-b from-[#3b26be] to-[#170a70] text-white rounded-[2rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden">
                             <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
                             
                             <h3 className="text-2xl font-black mb-8 relative z-10">Metric Breakdown</h3>
@@ -755,15 +762,15 @@ Output format must be pure JSON with the following structure without extra markd
                         <div className="bg-white border border-gray-200 rounded-[2rem] p-8 sm:p-12 shadow-xl text-center">
                             {!leadSubmitted ? (
                                 <div className="max-w-xl mx-auto space-y-6">
-                                    <div className="w-16 h-16 bg-vox-bg/10 text-vox-bg rounded-full flex items-center justify-center mx-auto text-2xl mb-4">
+                                    <div className="w-16 h-16 bg-[#3b26be]/10 text-[#3b26be] rounded-full flex items-center justify-center mx-auto text-2xl mb-4">
                                         <i className="fa-solid fa-file-pdf"></i>
                                     </div>
                                     <h3 className="text-3xl font-black text-gray-900">Get Your Complete PDF Report</h3>
                                     <p className="text-gray-500 font-medium">Enter your details to receive a full breakdown and an invitation to a free 30-minute growth consultation with our experts.</p>
                                     
                                     <form onSubmit={handleLeadSubmit} className="space-y-4 pt-4 text-left">
-                                        <input type="text" required placeholder="Your Name" className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-vox-accent bg-gray-50" />
-                                        <input type="email" required placeholder="Business Email" className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-vox-accent bg-gray-50" />
+                                        <input type="text" required placeholder="Your Name" className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3b26be] bg-gray-50" />
+                                        <input type="email" required placeholder="Business Email" className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3b26be] bg-gray-50" />
                                         <button type="submit" className="w-full bg-vox-btn hover:bg-black text-white font-bold py-4 rounded-xl transition duration-300 shadow-md">
                                             Send Me The Report &rarr;
                                         </button>
