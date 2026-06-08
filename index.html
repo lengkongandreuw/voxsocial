@@ -8,15 +8,14 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Konfigurasi tema Tailwind untuk layout modern bernuansa ungu gelap (Deep Violet) sesuai mockup
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         vox: {
-                            bg: '#3b26be', // Gradasi atas mockup
-                            bgBottom: '#170a70', // Gradasi bawah mockup
-                            btn: '#191046', // Tombol gelap dengan kontras tinggi
+                            bg: '#3b26be', 
+                            bgBottom: '#170a70', 
+                            btn: '#191046', 
                             accent: '#4324c4',
                         },
                         brand: {
@@ -56,7 +55,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Three.js CDN untuk efek latar belakang 3D partikel bintang halus -->
+    <!-- Three.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
@@ -66,7 +65,6 @@
             color: #ffffff;
             overflow-x: hidden;
         }
-        /* Kustomisasi scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #170a70; }
         ::-webkit-scrollbar-thumb { background: #3b26be; border-radius: 4px; }
@@ -85,33 +83,27 @@
 </head>
 <body class="antialiased">
 
-    <!-- React Root -->
     <div id="root"></div>
 
-    <!-- React and Babel CDNs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.10/babel.min.js" crossorigin></script>
 
-    <!-- Kode Utama Aplikasi React -->
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Konfigurasi API
         const apiKey = ""; 
 
-        // URL Aset Gambar & PNG Sesuai Revisi Terbaru Anda (Menggunakan raw.githubusercontent)
         const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox.png";
         const LOGO_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/vsllogo.png";
         const HEADLINE_PNG_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/headline.png";
 
-        // --- KOMPONEN LATAR BELAKANG THREE.JS ---
+        // --- THREE.JS BACKGROUND ---
         const ThreeBackground = () => {
             const mountRef = useRef(null);
 
             useEffect(() => {
                 const scene = new THREE.Scene();
-                // Menyelaraskan warna kabut luar dengan bagian bawah gradasi linear mockup (#170a70)
                 scene.fog = new THREE.FogExp2(0x170a70, 0.0018);
 
                 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -122,7 +114,6 @@
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 mountRef.current.appendChild(renderer.domElement);
 
-                // Grid sistem partikel bintang luar angkasa halus
                 const geometry = new THREE.BufferGeometry();
                 const particlesCount = 100;
                 const posArray = new Float32Array(particlesCount * 3);
@@ -233,7 +224,6 @@
                 const url = profileUrl.trim();
                 if (!url) return;
 
-                // Verifikasi awal: Cek format URL & batasi hanya untuk domain Instagram
                 const isUrl = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?(\?.*)?$/.test(url);
                 const isInstagram = url.toLowerCase().includes('instagram.com') || url.toLowerCase().includes('instagr.am');
 
@@ -347,8 +337,6 @@ Output format must be pure JSON with the following structure without extra markd
 
             return (
                 <div className="min-h-screen flex flex-col font-sans bg-gradient-to-b from-[#3b26be] to-[#170a70] text-white relative">
-                    
-                    {/* Tampilkan latar belakang 3D partikel interaktif hanya di halaman utama */}
                     {view === 'landing' && <ThreeBackground />}
 
                     <main className="flex-grow flex flex-col relative z-10">
@@ -380,131 +368,162 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 1. LANDING VIEW (Revolusioner Poster Wrapper)
+        // 1. LANDING VIEW (Centered Container Layout)
         // ==========================================
         function LandingSection({ profileUrl, setProfileUrl, handleAnalyze, inputError, setInputError }) {
             const mascotRef = useRef(null);
 
-            // Efek 3D Parallax interaktif mengikuti pergerakan kursor mouse pada maskot
             useEffect(() => {
                 const handleMouseMove = (e) => {
                     if (!mascotRef.current) return;
-                    const x = (window.innerWidth / 2 - e.pageX) / 45;
-                    const y = (window.innerHeight / 2 - e.pageY) / 45;
-                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.05, 1.05, 1.05)`;
+                    const x = (window.innerWidth / 2 - e.pageX) / 50;
+                    const y = (window.innerHeight / 2 - e.pageY) / 50;
+                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg)`;
                 };
                 window.addEventListener('mousemove', handleMouseMove);
                 return () => window.removeEventListener('mousemove', handleMouseMove);
             }, []);
 
             return (
-                <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#3b26be] to-[#170a70] flex flex-col justify-between">
-                    <div className="relative w-full max-w-[1600px] mx-auto flex-grow flex flex-col justify-between px-6 lg:px-12 py-6 z-10">
-                        
-                        {/* Header Navigasi Minimalis ke website utama (Pojok Kanan Atas) */}
-                        <header className="flex items-center justify-end w-full text-white z-50 animate-fade-in-up">
-                            <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-[#191046]/40 backdrop-blur-md border border-white/10 rounded-full px-5 py-2.5 text-sm font-extrabold tracking-tight hover:opacity-90 hover:border-white/20 transition-all">
-                                <div className="w-6 h-6 rounded-full bg-[#191046] flex items-center justify-center overflow-hidden">
-                                    <img src={LOGO_URL} className="w-full h-full object-contain" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
-                                </div>
-                                VOXLUMEDIA.COM &rarr;
-                            </a>
-                        </header>
-
-                        {/* Kanvas Utama Fleksibel (Desktop absolute poster composition, Mobile responsive stacked) */}
-                        <div className="relative flex-grow w-full min-h-[550px] lg:min-h-[700px] mt-6 lg:mt-0 flex flex-col justify-between lg:block">
-                            
-                            {/* 1. BACKGROUND HEADLINE IMAGE (Z-10) - Menggunakan berkas headline.png sesuai instruksi */}
-                            <div className="relative lg:absolute lg:left-1/2 lg:top-[6%] lg:-translate-x-1/2 z-10 pointer-events-none select-none text-center animate-fade-in-up w-full flex justify-center">
-                                <img 
-                                    src={HEADLINE_PNG_URL} 
-                                    alt="Vox Social Media Score" 
-                                    className="w-[90%] max-w-[700px] h-auto object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)] pointer-events-none"
-                                />
+                <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden">
+                    
+                    {/* Absolute Navbar at top right */}
+                    <header className="absolute top-0 right-0 w-full p-6 sm:px-10 z-50 flex justify-end pointer-events-none">
+                        <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="pointer-events-auto flex items-center gap-2 bg-[#191046]/40 backdrop-blur-md border border-white/10 rounded-full px-5 py-2.5 text-sm font-extrabold tracking-tight hover:bg-[#191046]/80 transition-all">
+                            <div className="w-6 h-6 rounded-full bg-[#191046] flex items-center justify-center overflow-hidden">
+                                <img src={LOGO_URL} className="w-full h-full object-contain" alt="Logo" onError={(e) => { e.target.style.display = 'none'; }} />
                             </div>
+                            VOXLUMEDIA.COM &rarr;
+                        </a>
+                    </header>
 
-                            {/* 2. OVERLAPPING MASCOT (Z-30) - Terpaku di Kiri Bawah, Menggunakan ryanvox.png asli */}
+                    {/* Centralized Hero Wrapper -> Limits maximum width so nothing breaks on wide screens */}
+                    <div className="flex-grow flex items-center justify-center w-full pt-20 pb-12 relative z-10">
+                        <div className="relative w-full max-w-[1100px] mx-auto px-4 sm:px-8 flex flex-col items-center">
+                            
+                            {/* Mascot Layer - Anchored absolutely to the left side of this container */}
                             <div 
-                                className="relative lg:absolute left-1/2 lg:left-[-6%] bottom-[-5%] -translate-x-1/2 lg:translate-x-0 z-30 w-[85vw] sm:w-[65vw] lg:w-[52vw] max-w-[880px] pointer-events-none mt-8 lg:mt-0 transition-transform duration-300 ease-out flex justify-center"
+                                className="absolute left-[-5%] sm:left-[-15%] lg:left-[-20%] top-1/2 -translate-y-[52%] z-30 w-[85%] sm:w-[65%] lg:w-[65%] max-w-[800px] pointer-events-none transition-transform duration-300 ease-out" 
                                 ref={mascotRef}
                             >
                                 <img 
                                     src={MASCOT_URL} 
                                     alt="Vox Mascot" 
-                                    className="w-full h-auto drop-shadow-[0_35px_50px_rgba(0,0,0,0.5)]"
+                                    className="w-full h-auto drop-shadow-[0_35px_50px_rgba(0,0,0,0.5)] animate-float"
                                 />
                             </div>
 
-                            {/* 3. CTA FORM BLOCK (Z-40) - Terpaku di Kanan Bawah Headline */}
-                            <div className="relative lg:absolute right-0 lg:right-[4%] top-auto lg:top-[48%] z-45 w-full lg:w-[35vw] max-w-[560px] text-center lg:text-left mt-10 lg:mt-0 space-y-4 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-                                <p className="text-white/90 text-sm sm:text-base lg:text-[1.08rem] max-w-[500px] mx-auto lg:mx-0 font-medium leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-                                    Get a clear picture of your Instagram presence and discover growth opportunities instantly.
-                                </p>
+                            {/* Main Content Area - Pushed to the right using width/margins */}
+                            <div className="w-full flex flex-col items-end relative z-10">
+                                
+                                {/* 1. The Full-Width Headline PNG */}
+                                <div className="w-full flex justify-end mb-6 animate-fade-in-up">
+                                    <img 
+                                        src={HEADLINE_PNG_URL} 
+                                        alt="Vox Social Media Score" 
+                                        className="w-full sm:w-[90%] lg:w-full h-auto object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)] pointer-events-none"
+                                    />
+                                </div>
 
-                                <form onSubmit={handleAnalyze} className="space-y-3 pt-2">
-                                    <div className="flex flex-col sm:flex-row gap-2 bg-white p-1.5 rounded-[2rem] sm:rounded-full shadow-2xl border border-white/25 hover:shadow-[0_0_35px_rgba(255,255,255,0.25)] transition-all">
-                                        <div className="relative flex-grow flex items-center px-4">
-                                            <i className="fa-solid fa-link text-gray-400 text-lg"></i>
-                                            <input 
-                                                type="url" 
-                                                required
-                                                maxLength={100}
-                                                value={profileUrl}
-                                                onChange={(e) => {
-                                                    setInputError('');
-                                                    setProfileUrl(e.target.value);
-                                                }}
-                                                placeholder="instagram.com/your_profile"
-                                                className="w-full bg-transparent text-gray-800 font-semibold pl-3 pr-2 py-3.5 focus:outline-none text-base placeholder-gray-400"
-                                            />
+                                {/* 2. CTA Block & Info (Restricted width to align nicely on the right) */}
+                                <div className="w-full sm:w-[70%] lg:w-[60%] relative z-40 text-left md:pl-4 animate-fade-in-up" style={{animationDelay: '0.15s'}}>
+                                    
+                                    <p className="text-white/95 text-[15px] sm:text-[17px] font-medium leading-snug mb-5 max-w-[480px]">
+                                        Get a clear picture of your Instagram presence and discover growth opportunities.
+                                    </p>
+
+                                    <form onSubmit={handleAnalyze} className="w-full max-w-[500px] space-y-2">
+                                        {/* Input Box Pill */}
+                                        <div className="flex flex-col sm:flex-row gap-2 bg-white p-1.5 rounded-[2rem] sm:rounded-full shadow-2xl hover:shadow-[0_0_35px_rgba(255,255,255,0.25)] transition-shadow duration-300">
+                                            <div className="relative flex-grow flex items-center px-4">
+                                                <i className="fa-solid fa-link text-gray-400 text-lg"></i>
+                                                <input 
+                                                    type="url" 
+                                                    required
+                                                    maxLength={100}
+                                                    value={profileUrl}
+                                                    onChange={(e) => {
+                                                        setInputError('');
+                                                        setProfileUrl(e.target.value);
+                                                    }}
+                                                    placeholder="instagram.com/your_business_pr"
+                                                    className="w-full bg-transparent text-gray-800 font-semibold pl-3 pr-2 py-3.5 focus:outline-none text-[15px] placeholder-gray-400"
+                                                />
+                                            </div>
+                                            <button 
+                                                type="submit" 
+                                                className="bg-[#191046] hover:bg-black text-white font-bold px-7 py-3.5 rounded-full transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 group shadow-inner"
+                                            >
+                                                Check Score &rarr;
+                                            </button>
                                         </div>
-                                        <button 
-                                            type="submit" 
-                                            className="bg-[#191046] hover:bg-black text-white font-bold px-8 py-3.5 rounded-full transition-all duration-300 whitespace-nowrap flex items-center justify-center gap-2 group shadow-inner"
-                                        >
-                                            Check Score &rarr;
-                                        </button>
-                                    </div>
 
-                                    {/* Indikator Info dan Sisa Karakter */}
-                                    <div className="flex justify-between items-center text-xs text-white/80 px-4 font-semibold drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
-                                        <span>Instagram URLs Only</span>
-                                        <span>{profileUrl.length}/100 characters</span>
-                                    </div>
-
-                                    {/* Pemberitahuan Kesalahan Validasi Input */}
-                                    {inputError && (
-                                        <div className="bg-rose-500/20 border border-rose-500/40 text-rose-200 px-5 py-3 rounded-2xl text-sm font-semibold flex items-center gap-3 animate-fade-in-up">
-                                            <i className="fa-solid fa-circle-exclamation text-rose-400 text-base"></i>
-                                            <span>{inputError}</span>
+                                        {/* Meta text under input */}
+                                        <div className="flex justify-between items-center text-[11px] sm:text-xs text-white/80 px-4 font-semibold drop-shadow-md">
+                                            <span>Instagram URLs Only</span>
+                                            <span>{profileUrl.length}/100 characters</span>
                                         </div>
-                                    )}
-                                </form>
 
-                                {/* Lencana audit khusus Instagram */}
-                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/15 text-xs font-black uppercase tracking-wider">
-                                        <i className="fa-brands fa-instagram text-pink-400 text-sm animate-pulse"></i>
-                                        <span>Instagram Audit</span>
+                                        {/* Error Alert */}
+                                        {inputError && (
+                                            <div className="bg-rose-500/20 border border-rose-500/40 text-rose-200 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 mt-2">
+                                                <i className="fa-solid fa-circle-exclamation"></i>
+                                                <span>{inputError}</span>
+                                            </div>
+                                        )}
+                                    </form>
+
+                                    {/* Trust & Optimization Badges */}
+                                    <div className="mt-6 space-y-4">
+                                        <div className="flex items-center gap-3 text-sm font-bold text-white/95">
+                                            <span>Exclusively optimized for:</span>
+                                            <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[11px] font-black uppercase tracking-wider">
+                                                <i className="fa-brands fa-instagram text-pink-400 text-sm"></i>
+                                                <span>Instagram Audit</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-bold text-white/80">
+                                            <span className="flex items-center gap-1.5"><i className="fa-solid fa-lock"></i> No login required</span>
+                                            <span className="flex items-center gap-1.5"><i className="fa-solid fa-shield"></i> 100% safe & private</span>
+                                            <span className="flex items-center gap-1.5"><i className="fa-regular fa-eye"></i> Public info only</span>
+                                        </div>
                                     </div>
+
                                 </div>
                             </div>
-
                         </div>
-
-                        {/* Panel Bawah Jauh Lebih Tipis (Bilah Strip Transparan Modern) */}
-                        <div className="w-full relative z-30 pt-6 pb-2 mt-12 lg:mt-4 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs sm:text-sm font-bold text-white/80">
-                            <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center">
-                                <span className="flex items-center gap-2"><i className="fa-solid fa-lock text-[12px] text-blue-300"></i> No login required</span>
-                                <span className="flex items-center gap-2"><i className="fa-solid fa-shield text-[12px] text-blue-300"></i> 100% safe & private</span>
-                                <span className="flex items-center gap-2"><i className="fa-regular fa-eye text-[12px] text-blue-300"></i> Public info only</span>
-                            </div>
-                            <div className="text-white/60 tracking-wider">
-                                Powered by VoxluMedia Audit Engine &copy; {new Date().getFullYear()}
-                            </div>
-                        </div>
-
                     </div>
+
+                    {/* Bottom Features Panel (from image_ce9d69.jpg) */}
+                    <div className="bg-white text-gray-900 rounded-t-[2.5rem] w-full relative z-30 pt-10 pb-6 px-6 shadow-[0_-10px_30px_rgba(0,0,0,0.1)]">
+                        <div className="max-w-[1200px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                            {[
+                                { icon: 'fa-solid fa-link', title: 'Enter Your Link', desc: 'Paste any public social media profile URL.' },
+                                { icon: 'fa-solid fa-magnifying-glass', title: 'We Analyze', desc: 'Our system reviews key elements of your profile.' },
+                                { icon: 'fa-solid fa-chart-simple', title: 'Get Your Score', desc: 'See your score across 5 business-focused areas.' },
+                                { icon: 'fa-regular fa-lightbulb', title: 'Get Recommendations', desc: 'Receive simple and actionable improvement tips.' },
+                                { icon: 'fa-solid fa-rocket', title: 'Grow Your Business', desc: 'Improve your presence and attract more customers.' }
+                            ].map((step, i) => (
+                                <div key={i} className="flex flex-col items-center text-center gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-vox-bg text-white flex items-center justify-center text-lg shadow-md">
+                                        <i className={step.icon}></i>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-extrabold text-[#111827] text-[15px] mb-1">{step.title}</h4>
+                                        <p className="text-[12px] text-gray-500 font-medium leading-relaxed max-w-[200px] mx-auto">{step.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="text-center mt-8 pt-5 border-t border-gray-100">
+                            <p className="text-xs font-extrabold text-[#3b26be]">
+                                Built for business owners. <span className="border-b-2 border-[#3b26be] pb-0.5">Focused on growth.</span>
+                            </p>
+                        </div>
+                    </div>
+
                 </div>
             );
         }
@@ -556,7 +575,7 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 3. RESULTS DASHBOARD (Sophisticated Summary)
+        // 3. RESULTS DASHBOARD
         // ==========================================
         function ResultsSection({ results, url, platform, setView }) {
             const [leadSubmitted, setLeadSubmitted] = useState(false);
@@ -577,7 +596,6 @@ Output format must be pure JSON with the following structure without extra markd
             return (
                 <div className="min-h-screen bg-[#FDFCF8] text-gray-900 w-full relative z-20 pb-20">
                     
-                    {/* Header bar matching landing style but light mode */}
                     <nav className="bg-[#170a70] text-white px-6 sm:px-12 py-5 sticky top-0 z-50 shadow-md">
                         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
                             <div className="flex items-center gap-3 font-extrabold text-xl cursor-pointer" onClick={() => setView('landing')}>
@@ -592,7 +610,6 @@ Output format must be pure JSON with the following structure without extra markd
 
                     <div className="max-w-5xl mx-auto py-12 px-6 space-y-10 animate-fade-in-up">
                         
-                        {/* PERFORMANCE SUMMARY SECTION */}
                         <div className="bg-white rounded-[2rem] border border-gray-200 p-8 sm:p-12 shadow-xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#3b26be]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
@@ -605,7 +622,6 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center relative z-10">
-                                {/* Score Circle */}
                                 <div className="md:col-span-5 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 pb-8 md:pb-0">
                                     <div className="relative w-48 h-48 flex items-center justify-center mb-6">
                                         <svg className="absolute w-full h-full transform -rotate-90">
@@ -628,7 +644,6 @@ Output format must be pure JSON with the following structure without extra markd
                                     </span>
                                 </div>
 
-                                {/* Narrative Summary with exact One Sentence Profile Identity Display */}
                                 <div className="md:col-span-7 space-y-6">
                                     <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-inner">
                                         <div className="mb-4 pb-4 border-b border-gray-200">
@@ -662,7 +677,6 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
                         </div>
 
-                        {/* Breakdown Categories */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
                                 <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
@@ -695,7 +709,6 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
                         </div>
 
-                        {/* Detailed Metrics */}
                         <div className="bg-gradient-to-b from-[#3b26be] to-[#170a70] text-white rounded-[2rem] p-8 sm:p-10 shadow-2xl relative overflow-hidden">
                             <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
                             
@@ -720,7 +733,6 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
                         </div>
 
-                        {/* Lead Capture */}
                         <div className="bg-white border border-gray-200 rounded-[2rem] p-8 sm:p-12 shadow-xl text-center">
                             {!leadSubmitted ? (
                                 <div className="max-w-xl mx-auto space-y-6">
