@@ -8,13 +8,14 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Konfigurasi tema Tailwind untuk layout modern bernuansa ungu gelap (Deep Violet)
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         vox: {
-                            bg: '#2513B8', // Authentic deep purple/blue from mockup
-                            btn: '#191046', // Dark contrast button
+                            bg: '#2513B8', // Ungu/biru ikonik sesuai mockup
+                            btn: '#191046', // Tombol gelap dengan kontras tinggi
                             accent: '#4324c4',
                         },
                         brand: {
@@ -54,7 +55,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Three.js CDN for 3D Background Effects -->
+    <!-- Three.js CDN untuk efek latar belakang 3D partikel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
@@ -64,7 +65,7 @@
             color: #ffffff;
             overflow-x: hidden;
         }
-        /* Custom scrollbar */
+        /* Kustomisasi scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #2513B8; }
         ::-webkit-scrollbar-thumb { background: #4a34e0; border-radius: 4px; }
@@ -91,18 +92,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.10/babel.min.js" crossorigin></script>
 
-    <!-- Main React Application Code -->
+    <!-- Kode Utama Aplikasi React -->
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Configuration
+        // Konfigurasi
         const apiKey = ""; 
 
-        // Asset URLs
-        const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox.png";
+        // URL Aset Gambar - Diperbarui ke ryanvox_large.png versi raw github
+        const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox_large.png";
         const LOGO_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/vsllogo.png";
 
-        // --- THREE.JS BACKGROUND COMPONENT ---
+        // --- KOMPONEN LATAR BELAKANG THREE.JS ---
         const ThreeBackground = () => {
             const mountRef = useRef(null);
 
@@ -118,7 +119,7 @@
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 mountRef.current.appendChild(renderer.domElement);
 
-                // Grid particle system
+                // Grid sistem partikel
                 const geometry = new THREE.BufferGeometry();
                 const particlesCount = 120;
                 const posArray = new Float32Array(particlesCount * 3);
@@ -185,6 +186,7 @@
         function App() {
             const [view, setView] = useState('landing'); 
             const [profileUrl, setProfileUrl] = useState('');
+            const [inputError, setInputError] = useState('');
             const [analyzingStep, setAnalyzingStep] = useState(0);
             const [analysisResults, setAnalysisResults] = useState(null);
 
@@ -227,10 +229,27 @@
 
             const handleAnalyze = async (e) => {
                 e.preventDefault();
-                if (!profileUrl.trim()) return;
+                setInputError('');
+
+                const url = profileUrl.trim();
+                if (!url) return;
+
+                // Verifikasi awal: Cek format URL & batasi hanya untuk domain Instagram
+                const isUrl = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?(\?.*)?$/.test(url);
+                const isInstagram = url.toLowerCase().includes('instagram.com') || url.toLowerCase().includes('instagr.am');
+
+                if (!isUrl) {
+                    setInputError("Please enter a valid URL address.");
+                    return;
+                }
+
+                if (!isInstagram) {
+                    setInputError("Audit restricted to Instagram links only. Please enter a valid Instagram profile URL.");
+                    return;
+                }
 
                 setView('loading');
-                const platform = detectPlatform(profileUrl);
+                const platform = 'Instagram';
                 
                 const systemPrompt = `You are a senior digital business auditor evaluating social media profiles for non-technical conventional business owners (aged 40-65).
 Use SIMPLE, friendly, professional, and easy-to-understand ENGLISH.
@@ -251,7 +270,7 @@ Output format must be pure JSON with the following structure without extra markd
   "dataCoverage": 50-95
 }`;
 
-                const userQuery = `Analyze the ${platform} profile with URL: ${profileUrl}. Provide a digital business readiness report.`;
+                const userQuery = `Analyze the ${platform} profile with URL: ${url}. Provide a digital business readiness report.`;
 
                 try {
                     let responseText = "";
@@ -277,7 +296,7 @@ Output format must be pure JSON with the following structure without extra markd
                         } catch (e) {}
                     }
 
-                    let finalData = success ? JSON.parse(responseText) : generateSimulatedResults(profileUrl, platform);
+                    let finalData = success ? JSON.parse(responseText) : generateSimulatedResults(url, platform);
 
                     setTimeout(() => {
                         setAnalysisResults(finalData);
@@ -285,7 +304,7 @@ Output format must be pure JSON with the following structure without extra markd
                     }, 1500);
 
                 } catch (error) {
-                    setAnalysisResults(generateSimulatedResults(profileUrl, platform));
+                    setAnalysisResults(generateSimulatedResults(url, platform));
                     setView('results');
                 }
             };
@@ -295,8 +314,8 @@ Output format must be pure JSON with the following structure without extra markd
                 const score = 68 + (hash % 24); 
                 
                 return {
-                    businessName: "Your Business Profile",
-                    profileIdentity: "This profile appears to belong to a growing business operating in the consumer services or retail sector.",
+                    businessName: "Your Instagram Business Profile",
+                    profileIdentity: "This profile appears to belong to an active commercial enterprise operating on Instagram.",
                     score: score,
                     label: score >= 90 ? "Excellent" : score >= 80 ? "Very Good" : score >= 70 ? "Good" : "Fair",
                     summary: "Your profile has a solid foundation. Focusing on clear calls-to-action will immediately boost trust and conversions.",
@@ -330,7 +349,7 @@ Output format must be pure JSON with the following structure without extra markd
             return (
                 <div className="min-h-screen flex flex-col font-sans bg-vox-bg text-white relative">
                     
-                    {/* Only show 3D Background on landing */}
+                    {/* Tampilkan latar belakang 3D interaktif hanya di halaman utama */}
                     {view === 'landing' && <ThreeBackground />}
 
                     <main className="flex-grow flex flex-col relative z-10">
@@ -339,6 +358,8 @@ Output format must be pure JSON with the following structure without extra markd
                                 profileUrl={profileUrl} 
                                 setProfileUrl={setProfileUrl} 
                                 handleAnalyze={handleAnalyze} 
+                                inputError={inputError}
+                                setInputError={setInputError}
                             />
                         )}
 
@@ -360,18 +381,18 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 1. LANDING VIEW (Compact Overlap Replica)
+        // 1. LANDING VIEW (Mascot Dominant & Overlapping)
         // ==========================================
-        function LandingSection({ profileUrl, setProfileUrl, handleAnalyze }) {
+        function LandingSection({ profileUrl, setProfileUrl, handleAnalyze, inputError, setInputError }) {
             const mascotRef = useRef(null);
 
-            // 3D Parallax effect for the Mascot
+            // Efek 3D Parallax interaktif mengikuti pergerakan kursor mouse
             useEffect(() => {
                 const handleMouseMove = (e) => {
                     if (!mascotRef.current) return;
                     const x = (window.innerWidth / 2 - e.pageX) / 45;
                     const y = (window.innerHeight / 2 - e.pageY) / 45;
-                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.1, 1.1, 1.1)`;
+                    mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg) scale3d(1.2, 1.2, 1.2)`;
                 };
                 window.addEventListener('mousemove', handleMouseMove);
                 return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -380,7 +401,7 @@ Output format must be pure JSON with the following structure without extra markd
             return (
                 <div className="min-h-screen w-full flex flex-col relative font-sans overflow-hidden">
                     
-                    {/* Minimalist Header containing ONLY the brand redirect link */}
+                    {/* Header Navigasi Minimalis ke website utama */}
                     <nav className="flex items-center justify-end px-6 sm:px-12 py-6 w-full max-w-[1600px] mx-auto text-white z-50 animate-fade-in-up">
                         <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 font-extrabold text-lg tracking-tight hover:opacity-80 transition-opacity">
                             <div className="w-9 h-9 rounded-full bg-vox-btn flex items-center justify-center shadow-lg border border-white/10">
@@ -390,31 +411,27 @@ Output format must be pure JSON with the following structure without extra markd
                         </a>
                     </nav>
 
-                    {/* Centralized & Compact Hero Section */}
-                    <div className="flex-grow flex flex-col lg:flex-row items-center justify-center max-w-[1300px] mx-auto px-6 py-2 gap-8 lg:gap-4 relative w-full z-10">
+                    {/* Area Hero Utama yang Dioptimalkan untuk Menonjolkan Maskot */}
+                    <div className="flex-grow flex flex-col lg:flex-row items-center justify-center max-w-[1450px] mx-auto px-6 py-2 gap-8 lg:gap-2 relative w-full z-10">
                         
-                        {/* LEFT: Massive Mascot Layer on Top (z-20) */}
-                        <div className="w-full lg:w-5/12 flex justify-center relative perspective-1000 z-20 lg:-mr-12">
+                        {/* KIRI: Maskot ryanvox_large.png Berukuran Sangat Besar & Dominan (z-30) */}
+                        <div className="w-full lg:w-5/12 flex justify-center relative perspective-1000 z-30 lg:-mr-4">
                             <div 
-                                className="relative w-full max-w-[340px] sm:max-w-[480px] animate-float transition-transform duration-300 ease-out" 
+                                className="relative w-full max-w-[400px] sm:max-w-[560px] lg:max-w-[640px] animate-float transition-transform duration-300 ease-out" 
                                 ref={mascotRef}
-                                style={{ transform: 'scale3d(1.1, 1.1, 1.1)' }}
+                                style={{ transform: 'scale3d(1.2, 1.2, 1.2)' }}
                             >
-                                {/* Glow behind mascot */}
-                                <div className="absolute inset-0 bg-blue-400/20 blur-[120px] rounded-full"></div>
+                                {/* Pijaran cahaya biru futuristik di belakang robot */}
+                                <div className="absolute inset-0 bg-blue-400/25 blur-[130px] rounded-full"></div>
                                 <img 
                                     src={MASCOT_URL} 
-                                    alt="Vox Mascot" 
-                                    className="w-full h-auto drop-shadow-[0_25px_35px_rgba(0,0,0,0.45)] pointer-events-none"
-                                    onError={(e) => {
-                                        e.target.src = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=500";
-                                        e.target.className = "rounded-[3rem] shadow-2xl grayscale";
-                                    }}
+                                    alt="Vox Large Mascot" 
+                                    className="w-full h-auto drop-shadow-[0_30px_45px_rgba(0,0,0,0.5)] pointer-events-none"
                                 />
                             </div>
                         </div>
 
-                        {/* RIGHT: Text Content with z-10 for Mascot Overlapping */}
+                        {/* KANAN: Informasi Headline & Input Pencarian (z-10) */}
                         <div className="w-full lg:w-7/12 text-white space-y-6 text-center lg:text-left z-10 mt-4 lg:mt-0 animate-fade-in-up" style={{animationDelay: '0.15s'}}>
                             
                             <div className="space-y-4">
@@ -423,21 +440,25 @@ Output format must be pure JSON with the following structure without extra markd
                                     MEDIA <span className="absolute font-brush text-vox-btn text-[0.8em] tracking-normal normal-case -rotate-[5deg] -right-2 lg:-right-20 bottom-1 lg:-bottom-2 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] opacity-95 z-30">Score</span>
                                 </h1>
                                 <p className="text-base sm:text-[20px] font-medium text-white/90 max-w-lg mx-auto lg:mx-0 leading-snug pt-3">
-                                    Get a clear picture of your social media presence and discover growth opportunities.
+                                    Get a clear picture of your Instagram presence and discover growth opportunities.
                                 </p>
                             </div>
 
-                            {/* Minimalist & Responsive Search Pill */}
-                            <form onSubmit={handleAnalyze} className="relative max-w-xl mx-auto lg:mx-0 pt-2">
+                            {/* Form Input Pencarian Tautan Instagram */}
+                            <form onSubmit={handleAnalyze} className="relative max-w-xl mx-auto lg:mx-0 pt-2 space-y-3">
                                 <div className="flex flex-col sm:flex-row gap-2 bg-white p-1.5 rounded-[2rem] sm:rounded-full shadow-2xl hover:shadow-[0_0_35px_rgba(255,255,255,0.25)] transition-shadow duration-300">
                                     <div className="relative flex-grow flex items-center px-4">
                                         <i className="fa-solid fa-link text-gray-400 text-lg"></i>
                                         <input 
                                             type="url" 
                                             required
+                                            maxLength={100}
                                             value={profileUrl}
-                                            onChange={(e) => setProfileUrl(e.target.value)}
-                                            placeholder="Paste your public social media URL here"
+                                            onChange={(e) => {
+                                                setInputError('');
+                                                setProfileUrl(e.target.value);
+                                            }}
+                                            placeholder="instagram.com/your_business_profile"
                                             className="w-full bg-transparent text-gray-800 font-semibold pl-4 pr-2 py-4 focus:outline-none text-base placeholder-gray-400"
                                         />
                                     </div>
@@ -448,18 +469,31 @@ Output format must be pure JSON with the following structure without extra markd
                                         Check My Score <i className="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                                     </button>
                                 </div>
+
+                                {/* Pemberitahuan Kesalahan Validasi Input */}
+                                {inputError && (
+                                    <div className="bg-rose-500/20 border border-rose-500/40 text-rose-200 px-5 py-3 rounded-2xl text-sm font-semibold flex items-center gap-3 animate-fade-in-up">
+                                        <i className="fa-solid fa-circle-exclamation text-rose-400 text-base"></i>
+                                        <span>{inputError}</span>
+                                    </div>
+                                )}
+
+                                {/* Indikator Sisa Jumlah Karakter Maksimal 100 */}
+                                <div className="flex justify-between items-center text-xs text-white/60 px-4">
+                                    <span>Instagram URLs Only</span>
+                                    <span>{profileUrl.length}/100 characters</span>
+                                </div>
                             </form>
 
-                            {/* Supported platforms list */}
+                            {/* Daftar Dukungan Khusus Instagram */}
                             <div className="space-y-4 pt-3">
                                 <div className="flex flex-col sm:flex-row items-center gap-3 text-sm font-bold text-white/95 justify-center lg:justify-start">
-                                    <span>Works with:</span>
+                                    <span>Exclusively optimized for:</span>
                                     <div className="flex gap-4 text-xl">
-                                        <i className="fa-brands fa-instagram hover:-translate-y-1 transition-transform cursor-pointer"></i>
-                                        <i className="fa-brands fa-facebook hover:-translate-y-1 transition-transform cursor-pointer"></i>
-                                        <i className="fa-brands fa-tiktok hover:-translate-y-1 transition-transform cursor-pointer"></i>
-                                        <i className="fa-brands fa-linkedin hover:-translate-y-1 transition-transform cursor-pointer"></i>
-                                        <i className="fa-brands fa-youtube hover:-translate-y-1 transition-transform cursor-pointer"></i>
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/15">
+                                            <i className="fa-brands fa-instagram text-pink-400"></i>
+                                            <span className="text-xs uppercase tracking-wider">Instagram Audit</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -473,11 +507,11 @@ Output format must be pure JSON with the following structure without extra markd
                         </div>
                     </div>
 
-                    {/* Bottom White Features Section */}
+                    {/* Bagian Panel Informasi / Fitur di Sisi Bawah Halaman */}
                     <div className="bg-white text-gray-900 rounded-t-[2.5rem] sm:rounded-t-[3.5rem] w-full mt-10 lg:mt-auto relative z-30 pt-14 pb-8 px-6 shadow-[0_-15px_40px_rgba(0,0,0,0.15)] animate-fade-in-up animate-delay-300">
                         <div className="max-w-[1300px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-10">
                             {[
-                                { icon: 'fa-solid fa-link', title: 'Enter Your Link', desc: 'Paste any public social media profile URL.' },
+                                { icon: 'fa-solid fa-link', title: 'Enter Link', desc: 'Paste your public Instagram profile URL.' },
                                 { icon: 'fa-solid fa-magnifying-glass', title: 'We Analyze', desc: 'Our system reviews key elements of your profile.' },
                                 { icon: 'fa-solid fa-chart-simple', title: 'Get Your Score', desc: 'See your score across 5 business-focused areas.' },
                                 { icon: 'fa-regular fa-lightbulb', title: 'Get Recommendations', desc: 'Receive simple and actionable improvement tips.' },
