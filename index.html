@@ -13,12 +13,13 @@
                 extend: {
                     colors: {
                         cyber: {
-                            bg: '#06021c',
+                            bg: '#06021c', // Background gelap pekat solid
                             bgLight: '#0d0735',
-                            accent: '#ff007f', // hot pink
-                            neonBlue: '#00f0ff', // neon cyan
-                            gold: '#ffb800', // gold stars
+                            accent: '#ff007f', // hot pink solid
+                            neonBlue: '#00f0ff', // cyan solid
+                            gold: '#ffb800', // bintang emas
                             purpleGlow: '#6c22ff',
+                            orangeSolid: '#ff7b1a' // Orange tombol solid dari panduan gambar
                         }
                     },
                     fontFamily: {
@@ -27,22 +28,32 @@
                     },
                     animation: {
                         'float': 'float 6s ease-in-out infinite',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float-delayed': 'floatSlow 8s ease-in-out infinite',
                         'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
-                        'glow-pulse': 'glowPulse 3s infinite alternate',
+                        'spin-slow': 'spin 20s linear infinite',
+                        'spin-reverse': 'spinReverse 25s linear infinite',
+                        'radar-sweep': 'radarSweep 4s linear infinite',
                     },
                     keyframes: {
                         float: {
                             '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-15px)' },
+                            '50%': { transform: 'translateY(-12px)' },
+                        },
+                        floatSlow: {
+                            '0%, 100%': { transform: 'translate(0px, 0px) rotate(0deg)' },
+                            '50%': { transform: 'translate(10px, -15px) rotate(3deg)' },
                         },
                         fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(25px)' },
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         },
-                        glowPulse: {
-                            '0%': { boxShadow: '0 0 10px rgba(108, 34, 255, 0.3), 0 0 20px rgba(0, 240, 255, 0.2)' },
-                            '100%': { boxShadow: '0 0 25px rgba(108, 34, 255, 0.6), 0 0 40px rgba(0, 240, 255, 0.4)' }
+                        spinReverse: {
+                            '0%': { transform: 'rotate(360deg)' },
+                            '100%': { transform: 'rotate(0deg)' }
+                        },
+                        radarSweep: {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
                         }
                     }
                 }
@@ -58,9 +69,6 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Three.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -69,42 +77,21 @@
             overflow-x: hidden;
         }
         
-        /* Custom Neon Scrollbar */
+        /* Kustomisasi scrollbar modern */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #06021c; }
-        ::-webkit-scrollbar-thumb { background: #22125b; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ff007f; }
+        ::-webkit-scrollbar-thumb { background: #191046; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff7b1a; }
 
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
+        .solid-glassmorphic {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .neon-text-glow {
-            text-shadow: 0 0 15px rgba(255, 0, 127, 0.4), 0 0 30px rgba(255, 123, 0, 0.2);
-        }
-
-        .glassmorphic {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .neon-border-input {
-            border: 1.5px solid rgba(108, 34, 255, 0.4);
-            box-shadow: 0 0 15px rgba(108, 34, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .neon-border-input:focus-within {
-            border-color: #00f0ff;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        .cyber-grid-bg {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
         }
     </style>
 </head>
@@ -122,89 +109,32 @@
 
         const apiKey = ""; 
 
-        // Official Image Assets
+        // URLs Aset Resmi
         const MASCOT_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/ryanvox.png";
         const LOGO_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/vsllogo.png";
-        const HEADLINE_PNG_URL = "https://raw.githubusercontent.com/lengkongandreuw/voxsocial/main/assets/headline.png";
 
-        // --- THREE.JS BACKGROUND COMPONENT ---
-        const ThreeBackground = () => {
-            const mountRef = useRef(null);
-
-            useEffect(() => {
-                const scene = new THREE.Scene();
-                scene.fog = new THREE.FogExp2(0x06021c, 0.002);
-
-                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.z = 32;
-
-                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                mountRef.current.appendChild(renderer.domElement);
-
-                // Deep space space particles
-                const geometry = new THREE.BufferGeometry();
-                const particlesCount = 140;
-                const posArray = new Float32Array(particlesCount * 3);
-
-                for(let i = 0; i < particlesCount * 3; i++) {
-                    posArray[i] = (Math.random() - 0.5) * 85;
-                }
-
-                geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-
-                const material = new THREE.PointsMaterial({
-                    size: 0.22,
-                    color: 0x6c22ff, // Purple/blue particles
-                    transparent: true,
-                    opacity: 0.6,
-                    blending: THREE.AdditiveBlending
-                });
-
-                const particlesMesh = new THREE.Points(geometry, material);
-                scene.add(particlesMesh);
-
-                let mouseX = 0;
-                let mouseY = 0;
+        // --- SISTEM GENERATOR AUDIO SYNTH MEKANIS (Mikro-Interaksi Suara) ---
+        const playSynthTick = (frequency = 600, type = 'sine', duration = 0.05, volume = 0.05) => {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gainNode = ctx.createGain();
                 
-                const handleMouseMove = (e) => {
-                    mouseX = (e.clientX / window.innerWidth) - 0.5;
-                    mouseY = (e.clientY / window.innerHeight) - 0.5;
-                };
-                window.addEventListener('mousemove', handleMouseMove);
-
-                const animate = () => {
-                    requestAnimationFrame(animate);
-                    particlesMesh.rotation.y += 0.0004;
-                    particlesMesh.rotation.x += 0.0002;
-                    
-                    particlesMesh.position.x += (mouseX * 4 - particlesMesh.position.x) * 0.05;
-                    particlesMesh.position.y += (-mouseY * 4 - particlesMesh.position.y) * 0.05;
-
-                    renderer.render(scene, camera);
-                };
-
-                animate();
-
-                const handleResize = () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                };
-                window.addEventListener('resize', handleResize);
-
-                return () => {
-                    window.removeEventListener('mousemove', handleMouseMove);
-                    window.removeEventListener('resize', handleResize);
-                    mountRef.current?.removeChild(renderer.domElement);
-                    geometry.dispose();
-                    material.dispose();
-                    renderer.dispose();
-                };
-            }, []);
-
-            return <div id="canvas-container" ref={mountRef}></div>;
+                osc.type = type;
+                osc.frequency.value = frequency;
+                gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+                // Efek penurunan volume cepat ala mesin retro-futuristik
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+                
+                osc.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                // Gagal memutar audio diabaikan (karena kebijakan autoplay browser)
+            }
         };
 
         function App() {
@@ -214,7 +144,7 @@
             const [analyzingStep, setAnalyzingStep] = useState(0);
             const [analysisResults, setAnalysisResults] = useState(null);
 
-            // Audit log sequences updated to English
+            // Alur log progres audit bahasa Inggris
             const analysisSteps = [
                 "Establishing secure connection to public nodes...",
                 "Retrieving Instagram bio, links, and public metadata...",
@@ -245,6 +175,7 @@
             const detectPlatform = (url) => {
                 const lower = url.toLowerCase();
                 if (lower.includes('instagram.com')) return 'Instagram';
+                if (lower.includes('facebook.com')) return 'Facebook Page';
                 return 'Social Media Profile';
             };
 
@@ -257,19 +188,23 @@
 
                 const isUrl = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?(\?.*)?$/.test(url);
                 const isInstagram = url.toLowerCase().includes('instagram.com') || url.toLowerCase().includes('instagr.am');
+                const isFacebook = url.toLowerCase().includes('facebook.com');
 
                 if (!isUrl) {
+                    playSynthTick(150, 'sawtooth', 0.2, 0.08); // Suara galat/error
                     setInputError("Please enter a valid profile URL.");
                     return;
                 }
 
-                if (!isInstagram) {
-                    setInputError("Audit restricted to Instagram links only. Please enter a valid Instagram profile URL.");
+                if (!isInstagram && !isFacebook) {
+                    playSynthTick(150, 'sawtooth', 0.2, 0.08); // Suara galat/error
+                    setInputError("Audit is currently optimized for Instagram & Facebook Pages only. Please provide a supported link.");
                     return;
                 }
 
+                playSynthTick(1000, 'sine', 0.2, 0.06); // Suara transisi sukses
                 setView('loading');
-                const platform = 'Instagram';
+                const platform = detectPlatform(url);
                 
                 const systemPrompt = `You are a senior digital business auditor evaluating social media profiles for non-technical conventional business owners (aged 40-65).
 Use SIMPLE, friendly, professional, and easy-to-understand ENGLISH.
@@ -334,25 +269,25 @@ Output format must be pure JSON with the following structure without extra markd
                 const score = 68 + (hash % 24); 
                 
                 return {
-                    businessName: "Your Instagram Business Profile",
-                    profileIdentity: "This profile appears to belong to an active commercial enterprise operating on Instagram.",
+                    businessName: platform === 'Instagram' ? "Your Instagram Business Profile" : "Your Facebook Business Page",
+                    profileIdentity: `This profile belongs to a growing commercial brand evaluated on ${platform}.`,
                     score: score,
                     label: score >= 90 ? "Excellent" : score >= 80 ? "Very Good" : score >= 70 ? "Good" : "Fair",
                     summary: "Your profile has a solid foundation. Focusing on clear calls-to-action will immediately boost trust and conversions.",
                     strengths: [
-                        "✓ Visual identity looks mostly consistent",
-                        "✓ Product presentation is clear",
-                        "✓ Profile is active and reachable"
+                        "✓ Visual identity looks consistent and professional",
+                        "✓ Core products are cleanly presented in posts",
+                        "✓ Contact options are accessible to visitors"
                     ],
                     opportunities: [
-                        "• Direct contact links are hard to find",
-                        "• Bio description lacks a strong value proposition",
-                        "• Customer engagement strategy needs optimization"
+                        "• Primary call-to-action is not prominent enough",
+                        "• Bio description misses a clear values hook",
+                        "• Reply rate and engagement features can be optimized"
                     ],
                     recommendations: [
-                        "Simplify your bio so customers understand your exact service in under 5 seconds.",
-                        "Add a prominent WhatsApp or booking link directly in your profile.",
-                        "Create pinned content highlighting customer reviews and FAQs."
+                        "Simplify your bio so visitors understand your exact service in under 5 seconds.",
+                        "Add a prominent booking link directly in your primary button area.",
+                        "Highlight high-quality customer reviews in your pinned content."
                     ],
                     categories: {
                         profileClarity: 70 + (hash % 20),
@@ -362,14 +297,12 @@ Output format must be pure JSON with the following structure without extra markd
                         businessReadiness: 50 + ((hash + 8) % 40)
                     },
                     growthPotential: score > 80 ? "High" : "Moderate",
-                    dataCoverage: 82 + (hash % 15)
+                    dataCoverage: 85 + (hash % 12)
                 };
             };
 
             return (
-                <div className="min-h-screen flex flex-col font-sans bg-gradient-to-b from-[#06021c] to-[#0c0529] text-white relative">
-                    {view === 'landing' && <ThreeBackground />}
-
+                <div className="min-h-screen flex flex-col font-sans bg-[#06021c] text-white relative">
                     <main className="flex-grow flex flex-col relative z-10">
                         {view === 'landing' && (
                             <LandingSection 
@@ -399,30 +332,91 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 1. LANDING VIEW (Rebuilt Visual Poster Layout)
+        // 1. LANDING VIEW (Aesthetic Looping & Interactive)
         // ==========================================
         function LandingSection({ profileUrl, setProfileUrl, handleAnalyze, inputError, setInputError }) {
             const mascotRef = useRef(null);
+            const [mascotBubbleText, setMascotBubbleText] = useState("Hey there! Ready to grade your profile?");
+            const [bubbleClickCount, setBubbleClickCount] = useState(0);
+
+            // Daftar opsi diagnostik sebelum audit dimulai (Gamifikasi)
+            const [neuralNodes, setNeuralNodes] = useState({
+                bioScan: true,
+                postDensity: true,
+                ctaVerification: false
+            });
+
+            // Dialog suara robot ryan
+            const mascotQuotes = [
+                "Hey there! Ready to grade your profile?",
+                "Did you know 82% of buyers check social trust before buying?",
+                "Click me again! I promise I don't bite. I only scan public data!",
+                "Try pasting your Instagram or Facebook link on the right!",
+                "No password needed. Fully secure and private!",
+                "Let's see if your Bio is ready to convert clicks into sales!"
+            ];
+
+            const handleMascotClick = () => {
+                playSynthTick(800 + (bubbleClickCount * 100), 'sine', 0.08, 0.04);
+                const nextCount = (bubbleClickCount + 1) % mascotQuotes.length;
+                setBubbleClickCount(nextCount);
+                setMascotBubbleText(mascotQuotes[nextCount]);
+            };
+
+            const toggleNeuralNode = (key) => {
+                playSynthTick(key === 'bioScan' ? 500 : key === 'postDensity' ? 650 : 800, 'square', 0.06, 0.03);
+                setNeuralNodes(prev => ({
+                    ...prev,
+                    [key]: !prev[key]
+                }));
+            };
 
             useEffect(() => {
                 const handleMouseMove = (e) => {
                     if (!mascotRef.current) return;
-                    const x = (window.innerWidth / 2 - e.pageX) / 60;
-                    const y = (window.innerHeight / 2 - e.pageY) / 60;
+                    const x = (window.innerWidth / 2 - e.pageX) / 75;
+                    const y = (window.innerHeight / 2 - e.pageY) / 75;
                     mascotRef.current.style.transform = `perspective(1000px) rotateY(${-x}deg) rotateX(${y}deg)`;
                 };
                 window.addEventListener('mousemove', handleMouseMove);
                 return () => window.removeEventListener('mousemove', handleMouseMove);
             }, []);
 
-            return (
-                <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden">
-                    
-                    {/* Neon Ambient Background Lights */}
-                    <div className="absolute top-[10%] left-[-10%] w-[35vw] h-[35vw] rounded-full bg-cyber-purpleGlow/25 blur-[120px] pointer-events-none"></div>
-                    <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-[#191046]/45 blur-[150px] pointer-events-none"></div>
+            // Hitung nilai kalibrator interaktif
+            const calcCalibrationLevel = () => {
+                let level = 35;
+                if (neuralNodes.bioScan) level += 20;
+                if (neuralNodes.postDensity) level += 25;
+                if (neuralNodes.ctaVerification) level += 20;
+                return level;
+            };
 
-                    {/* Navigation Header - Cleaned up to show only Logo and Booking CTA */}
+            // Validasi format interaktif
+            const hasProtocolOrSocial = profileUrl.toLowerCase().includes('http') || profileUrl.toLowerCase().includes('instagram.com') || profileUrl.toLowerCase().includes('facebook.com');
+            const hasUsernameSample = profileUrl.length > 15;
+            const isSafeLength = profileUrl.length > 0 && profileUrl.length <= 100;
+
+            return (
+                <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden cyber-grid-bg">
+                    
+                    {/* --- ELEMEN MICRO-ANIMATIONS LATAR BELAKANG --- */}
+                    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
+                        {/* Orbit Lingkaran Berputar Perlahan (Aesthetic Loop 1) */}
+                        <div className="absolute w-[450px] h-[450px] rounded-full border border-white/5 top-[10%] left-[5%] animate-spin-slow flex items-center justify-center">
+                            <div className="w-[350px] h-[350px] rounded-full border border-dashed border-white/10"></div>
+                        </div>
+
+                        {/* Radar Digital Penyapu Latar Belakang (Aesthetic Loop 2) */}
+                        <div className="absolute w-[300px] h-[300px] rounded-full border border-white/5 bottom-[10%] right-[10%] animate-spin-reverse flex items-center justify-center">
+                            <div className="w-1 h-[140px] bg-gradient-to-b from-[#ff7b1a]/20 to-transparent origin-bottom animate-radar-sweep"></div>
+                        </div>
+
+                        {/* Lencana Koordinat melayang */}
+                        <div className="absolute top-[25%] right-[12%] text-white/5 text-8xl font-black animate-float" style={{animationDuration: '9s'}}>@</div>
+                        <div className="absolute bottom-[35%] left-[8%] text-white/5 text-7xl font-bold animate-float-delayed" style={{animationDuration: '11s'}}>★</div>
+                    </div>
+
+                    {/* Navigation Header */}
                     <header className="absolute top-0 left-0 w-full p-6 sm:px-12 z-50 flex items-center justify-between">
                         <div className="flex items-center gap-3 font-black text-xl tracking-tight text-white select-none">
                             <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
@@ -430,7 +424,7 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
                             VOXLUMEDIA
                         </div>
-                        <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="bg-[#191046]/60 backdrop-blur-md border border-white/10 rounded-full px-5 py-2.5 text-xs sm:text-sm font-extrabold hover:bg-[#191046]/90 hover:border-white/20 transition-all">
+                        <a href="https://voxlumedia.com" target="_blank" rel="noopener noreferrer" className="bg-[#191046] border border-white/10 rounded-full px-5 py-2.5 text-xs sm:text-sm font-extrabold hover:bg-white hover:text-black transition-all active:scale-95 duration-200">
                             Book Free Consultation &rarr;
                         </a>
                     </header>
@@ -439,29 +433,43 @@ Output format must be pure JSON with the following structure without extra markd
                     <div className="flex-grow flex items-center justify-center w-full pt-32 pb-16 relative z-10">
                         <div className="w-full max-w-[1400px] mx-auto px-6 sm:px-12 grid grid-cols-1 lg:grid-cols-12 items-center gap-12 lg:gap-4">
                             
-                            {/* LEFT SIDE: Mascot + Floating AI Insights Badge */}
+                            {/* LEFT SIDE: Mascot + Interactive Speech Bubble + Floating AI Insights Badge */}
                             <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+                                
+                                {/* Mascot Speech Bubble (Gamifikasi / Interaksi) */}
+                                <div 
+                                    onClick={handleMascotClick}
+                                    className="absolute top-[-40px] z-50 bg-[#0c0735]/95 text-white px-4 py-3 rounded-2xl rounded-bl-none shadow-2xl border-2 border-[#ff7b1a] max-w-[220px] text-xs font-bold cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 select-none"
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[10px] text-[#ff7b1a] font-extrabold uppercase">Ryan Vox</span>
+                                        <span className="text-[8px] bg-white/10 text-white/50 px-1 rounded">TAP ME</span>
+                                    </div>
+                                    <p className="leading-snug text-white/95">{mascotBubbleText}</p>
+                                </div>
+
                                 <div 
                                     ref={mascotRef}
-                                    className="w-full h-auto transition-transform duration-300 ease-out flex justify-center relative z-20"
+                                    onClick={handleMascotClick}
+                                    className="w-full h-auto transition-transform duration-300 ease-out flex justify-center relative z-20 cursor-pointer"
+                                    title="Click me to talk!"
                                 >
-                                    <div className="absolute inset-0 bg-cyber-neonBlue/15 blur-[100px] rounded-full"></div>
                                     <img 
                                         src={MASCOT_URL} 
                                         alt="Vox Mascot" 
-                                        className="w-[85%] sm:w-[65%] lg:w-[100%] max-w-[500px] h-auto object-contain drop-shadow-[0_35px_50px_rgba(0,0,0,0.65)] animate-float"
+                                        className="w-[85%] sm:w-[65%] lg:w-[100%] max-w-[500px] h-auto object-contain drop-shadow-2xl animate-float hover:brightness-110 transition-all"
                                     />
                                 </div>
 
                                 {/* Floating Glass Card: "AI-POWERED INSIGHTS" */}
-                                <div className="absolute bottom-[2%] left-[-2%] sm:left-[5%] lg:left-[-5%] z-40 max-w-[240px] glassmorphic p-4 rounded-2xl border border-white/10 shadow-2xl flex gap-3 animate-float" style={{animationDelay: '1.5s'}}>
-                                    <div className="w-10 h-10 rounded-xl bg-cyber-purpleGlow/25 flex items-center justify-center text-cyber-neonBlue shrink-0">
+                                <div className="absolute bottom-[2%] left-[-2%] sm:left-[5%] lg:left-[-5%] z-40 max-w-[240px] solid-glassmorphic p-4 rounded-2xl shadow-2xl flex gap-3 animate-float" style={{animationDelay: '1.5s'}}>
+                                    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-cyber-neonBlue shrink-0">
                                         <i className="fa-solid fa-brain text-lg"></i>
                                     </div>
                                     <div className="space-y-1">
                                         <h4 className="text-[11px] font-black uppercase tracking-wider text-white">AI-POWERED INSIGHTS</h4>
                                         <p className="text-[10px] text-white/70 font-semibold leading-normal">
-                                            Advanced neural audit engine scans profile metrics and content structures instantly.
+                                            Our business-first engine automatically scans your profile indicators instantly.
                                         </p>
                                     </div>
                                 </div>
@@ -472,64 +480,135 @@ Output format must be pure JSON with the following structure without extra markd
                                 
                                 <div className="space-y-4">
                                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] sm:text-xs font-black tracking-widest text-[#a882ff] uppercase">
-                                        <i className="fa-solid fa-bolt text-cyber-accent"></i>
-                                        AI-POWERED SOCIAL MEDIA AUDIT
+                                        <i className="fa-solid fa-bolt text-[#ff7b1a]"></i>
+                                        AI-POWERED AUDIT TOOL
                                     </div>
                                     
                                     <h1 className="text-[2.8rem] sm:text-6xl lg:text-[5.4rem] font-black uppercase leading-[1.0] tracking-tighter text-white">
                                         VOX SOCIAL <br />
-                                        <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-cyber-accent bg-clip-text text-transparent neon-text-glow">SCORE</span>
+                                        <span className="text-[#ff7b1a]">SCORE</span>
                                     </h1>
                                     
                                     <p className="text-white/80 text-sm sm:text-lg lg:text-[20px] max-w-[620px] mx-auto lg:mx-0 font-medium leading-relaxed">
-                                        Get an instant visual snapshot of how easily potential customers trust and purchase products from your Instagram profile.
+                                        Get an instant business-first evaluation. Learn how easily potential customers find, trust, and purchase products from your social channels.
                                     </p>
                                 </div>
 
-                                {/* Form Input with Neon Border and Character limit */}
-                                <form onSubmit={handleAnalyze} className="relative w-full max-w-[650px] mx-auto lg:mx-0 space-y-3 pt-2">
-                                    <div className="flex flex-col sm:flex-row gap-2.5 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl relative">
+                                {/* Form Input dengan panel gamifikasi baru di bawahnya */}
+                                <form onSubmit={handleAnalyze} className="relative w-full max-w-[650px] mx-auto lg:mx-0 space-y-4 pt-2">
+                                    
+                                    {/* Kolom input utama */}
+                                    <div className="flex flex-col sm:flex-row gap-2.5 bg-white/5 p-2 rounded-2xl border border-white/15 backdrop-blur-xl shadow-2xl relative transition-all duration-300 focus-within:border-[#ff7b1a]">
                                         <div className="relative flex-grow flex items-center px-4">
-                                            <span className="text-white/40 text-xl font-black mr-2 font-mono">@</span>
+                                            <span className={`transition-colors duration-300 text-xl font-black mr-2 font-mono ${hasProtocolOrSocial ? 'text-[#ff7b1a]' : 'text-white/40'}`}>@</span>
                                             <input 
                                                 type="url" 
                                                 required
                                                 maxLength={100}
                                                 value={profileUrl}
+                                                onKeyDown={() => playSynthTick(1200, 'sine', 0.03, 0.015)} // Klik mekanis keyboard
                                                 onChange={(e) => {
                                                     setInputError('');
                                                     setProfileUrl(e.target.value);
                                                 }}
-                                                placeholder="Enter your public Instagram Business URL"
+                                                placeholder="Enter Instagram or Facebook Page URL"
                                                 className="w-full bg-transparent text-white font-bold placeholder-white/40 focus:outline-none text-[15px] sm:text-base py-3"
                                             />
                                         </div>
                                         <button 
                                             type="submit" 
-                                            className="bg-gradient-to-r from-orange-500 via-pink-500 to-cyber-accent hover:opacity-95 text-white font-black px-10 py-4 rounded-xl transition-all duration-300 text-sm whitespace-nowrap shadow-lg flex items-center justify-center gap-2"
+                                            className="bg-[#ff7b1a] hover:bg-[#e06200] text-white font-black px-10 py-4 rounded-xl transition-all duration-200 text-sm whitespace-nowrap shadow-md flex items-center justify-center gap-2 hover:scale-[1.03] active:scale-95"
                                         >
                                             Get My Score <i className="fa-solid fa-arrow-right"></i>
                                         </button>
                                     </div>
 
+                                    {/* --- LIVE NEURAL DIAGNOSTIC TERMINAL (Komponen tambahan gamifikasi bernuansa gelap futuristik) --- */}
+                                    <div className="bg-[#0b072c] border border-white/10 rounded-2xl p-4 text-left shadow-2xl relative overflow-hidden">
+                                        <div className="absolute right-3 top-3 flex items-center gap-1.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            <span className="text-[10px] font-mono tracking-widest text-emerald-500">LIVE FEED</span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                                            
+                                            {/* Kalibrator Node Bar */}
+                                            <div className="md:col-span-4 space-y-1">
+                                                <span className="text-[10px] font-black text-white/50 tracking-wider block">DIAGNOSTIC CALIBRATION</span>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-2xl font-black text-cyber-neonBlue tracking-tight">{calcCalibrationLevel()}%</span>
+                                                    <span className="text-[10px] font-mono text-white/40">READY</span>
+                                                </div>
+                                                <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                                                    <div className="bg-cyber-neonBlue h-full rounded-full transition-all duration-300" style={{ width: `${calcCalibrationLevel()}%` }}></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Modul neural switch yang dapat diklik */}
+                                            <div className="md:col-span-8 flex flex-wrap gap-2 justify-start md:justify-end">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => toggleNeuralNode('bioScan')}
+                                                    className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-2 transition-all ${
+                                                        neuralNodes.bioScan 
+                                                        ? 'bg-cyber-neonBlue/10 border-cyber-neonBlue text-cyber-neonBlue shadow-[0_0_15px_rgba(0,240,255,0.15)]' 
+                                                        : 'bg-white/5 border-white/10 text-white/55 hover:border-white/20'
+                                                    }`}
+                                                >
+                                                    <i className="fa-solid fa-fingerprint"></i> Bio Metadata Scan
+                                                </button>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => toggleNeuralNode('postDensity')}
+                                                    className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-2 transition-all ${
+                                                        neuralNodes.postDensity 
+                                                        ? 'bg-pink-500/10 border-pink-500 text-pink-400 shadow-[0_0_15px_rgba(255,0,127,0.15)]' 
+                                                        : 'bg-white/5 border-white/10 text-white/55 hover:border-white/20'
+                                                    }`}
+                                                >
+                                                    <i className="fa-solid fa-cubes"></i> Post Density Audit
+                                                </button>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => toggleNeuralNode('ctaVerification')}
+                                                    className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-2 transition-all ${
+                                                        neuralNodes.ctaVerification 
+                                                        ? 'bg-amber-400/10 border-amber-400 text-amber-400 shadow-[0_0_15px_rgba(255,184,0,0.15)]' 
+                                                        : 'bg-white/5 border-white/10 text-white/55 hover:border-white/20'
+                                                    }`}
+                                                >
+                                                    <i className="fa-solid fa-link"></i> CTA Check
+                                                </button>
+                                            </div>
+
+                                        </div>
+
+                                        {/* Status checker dinamis */}
+                                        <div className="mt-3 pt-3 border-t border-white/5 flex gap-4 text-[10px] font-mono text-white/60">
+                                            <span className="flex items-center gap-1"><i className={`fa-solid ${hasProtocolOrSocial ? 'fa-circle-check text-emerald-400' : 'fa-circle text-white/20'}`}></i> URL FORMAT</span>
+                                            <span className="flex items-center gap-1"><i className={`fa-solid ${hasUsernameSample ? 'fa-circle-check text-emerald-400' : 'fa-circle text-white/20'}`}></i> SCAN DEPTH</span>
+                                            <span className="flex items-center gap-1"><i className={`fa-solid ${isSafeLength ? 'fa-circle-check text-emerald-400' : 'fa-circle text-white/20'}`}></i> BUFFER SAFE</span>
+                                        </div>
+                                    </div>
+
                                     {/* Arrow Note Pointer */}
                                     <div className="hidden md:flex absolute right-[-140px] top-[15px] items-center gap-2 pointer-events-none animate-bounce" style={{animationDuration: '3s'}}>
-                                        <svg className="w-12 h-12 text-cyber-accent rotate-[-20deg]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                        <svg className="w-12 h-12 text-[#ff7b1a] rotate-[-20deg]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                         </svg>
-                                        <span className="text-xs font-brush text-cyber-accent text-medium tracking-wide rotate-[-5deg]">Start your free audit!</span>
+                                        <span className="text-xs font-brush text-[#ff7b1a] text-medium tracking-wide rotate-[-5deg]">Start your free audit!</span>
                                     </div>
 
                                     {/* Verification Badges Row */}
                                     <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-xs font-bold text-white/70 pt-1">
-                                        <span className="flex items-center gap-1.5"><i className="fa-solid fa-circle-check text-cyber-neonBlue"></i> No credit card required</span>
-                                        <span className="flex items-center gap-1.5"><i className="fa-solid fa-circle-check text-cyber-neonBlue"></i> Free instant report</span>
-                                        <span className="flex items-center gap-1.5"><i className="fa-solid fa-circle-check text-cyber-neonBlue"></i> Finished in 60s</span>
+                                        <span className="flex items-center gap-1.5"><i className="fa-solid fa-circle-check text-[#ff7b1a]"></i> No credit card required</span>
+                                        <span className="flex items-center gap-1.5"><i className="fa-solid fa-circle-check text-[#ff7b1a]"></i> Free instant report</span>
+                                        <span className="flex items-center gap-1.5"><i className="fa-solid fa-circle-check text-[#ff7b1a]"></i> Finished in 60s</span>
                                     </div>
 
                                     {/* Character counter / Instagram constraint alert */}
                                     <div className="flex justify-between items-center text-[11px] text-white/40 font-semibold px-2">
-                                        <span>Exclusively Optimized for Instagram</span>
+                                        <span>Optimized for Instagram & Facebook Pages</span>
                                         <span>{profileUrl.length}/100 characters</span>
                                     </div>
 
@@ -549,22 +628,23 @@ Output format must be pure JSON with the following structure without extra markd
 
                     {/* Bottom Stats Card panel */}
                     <div className="w-full relative z-30 px-6 sm:px-12 pb-10">
-                        <div className="max-w-[1300px] mx-auto glassmorphic rounded-[2.5rem] p-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-center border border-white/10 shadow-2xl">
+                        <div className="max-w-[1300px] mx-auto solid-glassmorphic rounded-[2.5rem] p-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-center shadow-2xl">
                             
                             {/* Stat 1: Trusted by */}
-                            <div className="md:col-span-3 flex items-center gap-4 justify-center md:justify-start">
-                                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-cyber-neonBlue text-xl">
-                                    <i className="fa-solid fa-users"></i>
+                            <div className="md:col-span-3 flex items-center gap-4 justify-center md:justify-start group cursor-default transition-transform duration-300 hover:scale-[1.03]">
+                                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#ff7b1a] text-xl transition-all duration-300 group-hover:bg-[#ff7b1a] group-hover:text-white">
+                                    <i className="fa-solid fa-globe"></i>
                                 </div>
                                 <div className="space-y-0.5">
                                     <p className="text-[10px] font-black uppercase text-white/50 tracking-wider">TRUSTED BY</p>
-                                    <p className="text-lg font-black text-white">120+ Businesses</p>
+                                    <p className="text-sm font-black text-white leading-tight">50+ Businesses Around the World</p>
+                                    <p className="text-[10px] text-white/40 font-semibold italic">Distributed team from all corners of the world</p>
                                 </div>
                             </div>
 
                             {/* Stat 2: Rating */}
-                            <div className="md:col-span-3 flex items-center gap-4 justify-center">
-                                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-cyber-gold text-xl">
+                            <div className="md:col-span-3 flex items-center gap-4 justify-center group cursor-default transition-transform duration-300 hover:scale-[1.03]">
+                                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-cyber-gold text-xl transition-all duration-300 group-hover:bg-cyber-gold group-hover:text-[#06021c]">
                                     <i className="fa-solid fa-star"></i>
                                 </div>
                                 <div className="space-y-0.5">
@@ -572,19 +652,19 @@ Output format must be pure JSON with the following structure without extra markd
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-lg font-black text-white">4.9/5</span>
                                         <div className="flex gap-0.5 text-[10px] text-cyber-gold">
-                                            <i className="fa-solid fa-star"></i>
-                                            <i className="fa-solid fa-star"></i>
-                                            <i className="fa-solid fa-star"></i>
-                                            <i className="fa-solid fa-star"></i>
-                                            <i className="fa-solid fa-star"></i>
+                                            <i className="fa-solid fa-star animate-pulse"></i>
+                                            <i className="fa-solid fa-star animate-pulse" style={{animationDelay: '0.2s'}}></i>
+                                            <i className="fa-solid fa-star animate-pulse" style={{animationDelay: '0.4s'}}></i>
+                                            <i className="fa-solid fa-star animate-pulse" style={{animationDelay: '0.6s'}}></i>
+                                            <i className="fa-solid fa-star animate-pulse" style={{animationDelay: '0.8s'}}></i>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Stat 3: Posts analyzed */}
-                            <div className="md:col-span-3 flex items-center gap-4 justify-center">
-                                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-pink-400 text-xl">
+                            <div className="md:col-span-3 flex items-center gap-4 justify-center group cursor-default transition-transform duration-300 hover:scale-[1.03]">
+                                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-pink-400 text-xl transition-all duration-300 group-hover:bg-pink-500 group-hover:text-white">
                                     <i className="fa-solid fa-chart-line"></i>
                                 </div>
                                 <div className="space-y-0.5">
@@ -596,19 +676,22 @@ Output format must be pure JSON with the following structure without extra markd
                             {/* Supported Platforms icons list */}
                             <div className="md:col-span-3 flex flex-col items-center md:items-end justify-center gap-2">
                                 <p className="text-[10px] font-black uppercase text-white/50 tracking-wider">SUPPORTED PLATFORMS</p>
-                                <div className="flex items-center gap-3.5 text-lg text-white/70">
-                                    <i className="fa-brands fa-instagram text-pink-400 hover:text-white cursor-pointer transition-colors scale-125" title="Exclusively Optimized"></i>
-                                    <i className="fa-brands fa-tiktok hover:text-white cursor-pointer transition-colors opacity-40"></i>
-                                    <i className="fa-brands fa-facebook hover:text-white cursor-pointer transition-colors opacity-40"></i>
-                                    <i className="fa-brands fa-linkedin hover:text-white cursor-pointer transition-colors opacity-40"></i>
-                                    <i className="fa-brands fa-youtube hover:text-white cursor-pointer transition-colors opacity-40"></i>
+                                <div className="flex items-center gap-4 text-xl">
+                                    <div className="flex items-center gap-1.5 group cursor-pointer" title="Instagram Supported">
+                                        <i className="fa-brands fa-instagram text-pink-400 transition-transform duration-300 group-hover:scale-125"></i>
+                                        <span className="text-[10px] font-bold text-white/60">Instagram</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 group cursor-pointer" title="Facebook Page Supported">
+                                        <i className="fa-brands fa-facebook text-blue-400 transition-transform duration-300 group-hover:scale-125"></i>
+                                        <span className="text-[10px] font-bold text-white/60">Facebook</span>
+                                    </div>
                                 </div>
                             </div>
 
                         </div>
 
-                        {/* Revised Copyright Footer */}
-                        <div className="mt-8 text-center text-xs text-white/40 font-semibold tracking-wide">
+                        {/* Exact Copyright Footer */}
+                        <div className="mt-8 text-center text-xs text-white/40 font-semibold tracking-wide select-none">
                             Copyright © 2026 Voxlumedia™ | Creative Agency for Digital Marketing
                         </div>
                     </div>
@@ -625,13 +708,13 @@ Output format must be pure JSON with the following structure without extra markd
 
             return (
                 <div className="min-h-screen bg-[#06021c] flex flex-col items-center justify-center p-6 relative z-10">
-                    <div className="max-w-md w-full glassmorphic p-10 rounded-3xl border border-white/10 shadow-2xl text-center space-y-8 animate-fade-in-up">
+                    <div className="max-w-md w-full solid-glassmorphic p-10 rounded-3xl text-center space-y-8 animate-fade-in-up">
                         
                         <div className="relative w-28 h-28 mx-auto">
                             <div className="absolute inset-0 rounded-full border-4 border-white/5"></div>
-                            <div className="absolute inset-0 rounded-full border-4 border-t-cyber-neonBlue border-r-cyber-accent animate-spin"></div>
+                            <div className="absolute inset-0 rounded-full border-4 border-t-[#ff7b1a] border-r-pink-500 animate-spin"></div>
                             <div className="absolute inset-2 flex items-center justify-center bg-[#0d0735] rounded-full">
-                                <i className="fa-solid fa-robot text-cyber-neonBlue text-3xl animate-pulse"></i>
+                                <i className="fa-solid fa-robot text-[#ff7b1a] text-3xl animate-pulse"></i>
                             </div>
                         </div>
 
@@ -645,11 +728,11 @@ Output format must be pure JSON with the following structure without extra markd
                         <div className="space-y-3">
                             <div className="flex justify-between text-xs font-bold text-white/50">
                                 <span>PROGRESS</span>
-                                <span className="text-cyber-neonBlue">{progressPercentage}%</span>
+                                <span className="text-[#ff7b1a]">{progressPercentage}%</span>
                             </div>
                             <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
                                 <div 
-                                    className="bg-gradient-to-r from-cyber-neonBlue to-cyber-accent h-full rounded-full transition-all duration-500 ease-out" 
+                                    className="bg-[#ff7b1a] h-full rounded-full transition-all duration-500 ease-out" 
                                     style={{ width: `${progressPercentage}%` }}
                                 ></div>
                             </div>
@@ -664,7 +747,7 @@ Output format must be pure JSON with the following structure without extra markd
         }
 
         // ==========================================
-        // 3. RESULTS DASHBOARD (Glossy Cyber Theme)
+        // 3. RESULTS DASHBOARD (Solid Premium Dark Theme)
         // ==========================================
         function ResultsSection({ results, url, platform, setView }) {
             const [leadSubmitted, setLeadSubmitted] = useState(false);
@@ -683,12 +766,8 @@ Output format must be pure JSON with the following structure without extra markd
             };
 
             return (
-                <div className="min-h-screen bg-gradient-to-b from-[#06021c] to-[#0c0529] text-white w-full relative z-20 pb-20">
+                <div className="min-h-screen bg-[#06021c] text-white w-full relative z-20 pb-20">
                     
-                    {/* Background Neon Spot Accents */}
-                    <div className="absolute top-[5%] left-[-10%] w-[30vw] h-[30vw] rounded-full bg-cyber-purpleGlow/20 blur-[130px] pointer-events-none"></div>
-                    <div className="absolute top-[40%] right-[-10%] w-[35vw] h-[35vw] rounded-full bg-cyber-accent/15 blur-[130px] pointer-events-none"></div>
-
                     {/* Top Result Navigation Header */}
                     <nav className="border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-50">
                         <div className="max-w-[1400px] mx-auto px-6 sm:px-12 py-5 flex items-center justify-between">
@@ -707,14 +786,12 @@ Output format must be pure JSON with the following structure without extra markd
                     <div className="max-w-5xl mx-auto py-12 px-6 space-y-10 animate-fade-in-up">
                         
                         {/* PERFORMANCE SUMMARY SECTION */}
-                        <div className="glassmorphic rounded-[2.5rem] border border-white/10 p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-cyber-purpleGlow/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-
+                        <div className="solid-glassmorphic rounded-[2.5rem] p-8 sm:p-12 shadow-2xl relative overflow-hidden">
                             <div className="text-center mb-10 relative z-10">
-                                <span className="text-xs font-black tracking-widest text-cyber-neonBlue uppercase mb-2 block">Performance Summary</span>
+                                <span className="text-xs font-black tracking-widest text-[#ff7b1a] uppercase mb-2 block">Performance Summary</span>
                                 <h2 className="text-3xl sm:text-4xl font-black text-white">Your Business Health Report</h2>
                                 <p className="text-white/50 font-medium mt-2 flex items-center justify-center gap-2">
-                                    <i className="fa-solid fa-chart-pie text-cyber-accent"></i> {platform} Analysis
+                                    <i className="fa-solid fa-chart-pie text-[#ff7b1a]"></i> {platform} Analysis
                                 </p>
                             </div>
 
@@ -746,7 +823,7 @@ Output format must be pure JSON with the following structure without extra markd
                                 <div className="md:col-span-7 space-y-6">
                                     <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-inner">
                                         <div className="mb-4 pb-4 border-b border-white/5">
-                                            <span className="text-[10px] font-black tracking-widest text-cyber-neonBlue uppercase mb-1 block">Profile Identity</span>
+                                            <span className="text-[10px] font-black tracking-widest text-[#ff7b1a] uppercase mb-1 block">Profile Identity</span>
                                             <p className="text-white font-bold text-lg leading-snug">
                                                 {results.profileIdentity}
                                             </p>
@@ -758,14 +835,14 @@ Output format must be pure JSON with the following structure without extra markd
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-white/5 border border-white/10 p-4 rounded-xl shadow-sm flex items-start gap-3">
-                                            <i className="fa-solid fa-arrow-trend-up text-cyber-neonBlue mt-1"></i>
+                                            <i className="fa-solid fa-arrow-trend-up text-[#ff7b1a] mt-1"></i>
                                             <div>
                                                 <p className="text-[10px] text-white/50 font-bold uppercase">Growth Potential</p>
                                                 <p className="text-base font-black text-white">{results.growthPotential}</p>
                                             </div>
                                         </div>
                                         <div className="bg-white/5 border border-white/10 p-4 rounded-xl shadow-sm flex items-start gap-3">
-                                            <i className="fa-solid fa-check-double text-cyber-accent mt-1"></i>
+                                            <i className="fa-solid fa-check-double text-pink-500 mt-1"></i>
                                             <div>
                                                 <p className="text-[10px] text-white/50 font-bold uppercase">Profile Readiness</p>
                                                 <p className="text-base font-black text-white">{results.categories.businessReadiness}/100</p>
@@ -778,7 +855,7 @@ Output format must be pure JSON with the following structure without extra markd
 
                         {/* Strengths & Opportunities */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="glassmorphic rounded-3xl p-8 border border-white/10 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="solid-glassmorphic rounded-3xl p-8 border border-white/10 shadow-sm hover:shadow-md transition-shadow">
                                 <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-emerald-400/10 text-emerald-400 flex items-center justify-center"><i className="fa-solid fa-check text-sm"></i></div>
                                     Key Strengths
@@ -793,7 +870,7 @@ Output format must be pure JSON with the following structure without extra markd
                                 </ul>
                             </div>
                             
-                            <div className="glassmorphic rounded-3xl p-8 border border-white/10 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="solid-glassmorphic rounded-3xl p-8 border border-white/10 shadow-sm hover:shadow-md transition-shadow">
                                 <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center"><i className="fa-solid fa-lightbulb text-sm"></i></div>
                                     Opportunities
@@ -809,19 +886,17 @@ Output format must be pure JSON with the following structure without extra markd
                             </div>
                         </div>
 
-                        {/* Metric Scores */}
-                        <div className="glassmorphic text-white rounded-[2rem] p-8 sm:p-10 border border-white/10 shadow-2xl relative overflow-hidden">
-                            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-                            
+                        {/* Detailed Metrics */}
+                        <div className="solid-glassmorphic text-white rounded-[2rem] p-8 sm:p-10 border border-white/10 shadow-2xl relative overflow-hidden">
                             <h3 className="text-2xl font-black mb-8 relative z-10">Metric Breakdown</h3>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 relative z-10">
                                 {[
                                     { label: 'Profile Clarity', score: results.categories.profileClarity, icon: 'fa-id-badge', color: 'bg-cyber-neonBlue' },
-                                    { label: 'Content Quality', score: results.categories.contentQuality, icon: 'fa-image', color: 'bg-cyber-accent' },
+                                    { label: 'Content Quality', score: results.categories.contentQuality, icon: 'fa-image', color: 'bg-pink-500' },
                                     { label: 'Trust Signals', score: results.categories.trustScore, icon: 'fa-shield-halved', color: 'bg-cyber-gold' }
                                 ].map((cat, i) => (
-                                    <div key={i} className="bg-white/5 border border-white/15 p-5 rounded-2xl">
+                                    <div key={i} className="bg-white/5 border border-white/15 p-5 rounded-2xl animate-pulse" style={{animationDuration: '3s', animationDelay: `${i*0.3}s`}}>
                                         <div className="flex justify-between items-center mb-3">
                                             <span className="text-sm font-bold text-white/70 flex items-center gap-2">
                                                 <i className={`fa-solid ${cat.icon} text-white/40`}></i> {cat.label}
@@ -837,9 +912,7 @@ Output format must be pure JSON with the following structure without extra markd
                         </div>
 
                         {/* Lead Capture form */}
-                        <div className="glassmorphic rounded-[2rem] border border-white/10 p-8 sm:p-12 shadow-2xl text-center relative overflow-hidden">
-                            <div className="absolute -left-20 bottom-[-20%] w-72 h-72 bg-cyber-purpleGlow/20 rounded-full blur-[100px] pointer-events-none"></div>
-                            
+                        <div className="solid-glassmorphic rounded-[2rem] border border-white/10 p-8 sm:p-12 shadow-2xl text-center relative overflow-hidden">
                             {!leadSubmitted ? (
                                 <div className="max-w-xl mx-auto space-y-6 relative z-10">
                                     <div className="w-16 h-16 bg-white/5 border border-white/10 text-cyber-neonBlue rounded-full flex items-center justify-center mx-auto text-2xl mb-4">
@@ -850,14 +923,14 @@ Output format must be pure JSON with the following structure without extra markd
                                     
                                     <form onSubmit={handleLeadSubmit} className="space-y-4 pt-4 text-left">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <input type="text" required placeholder="Full Name" value={leadData.name} onChange={(e) => setLeadData({...leadData, name: e.target.value})} className="w-full border border-white/10 focus:border-cyber-neonBlue rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
-                                            <input type="email" required placeholder="Business Email" value={leadData.email} onChange={(e) => setLeadData({...leadData, email: e.target.value})} className="w-full border border-white/10 focus:border-cyber-neonBlue rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
+                                            <input type="text" required placeholder="Full Name" value={leadData.name} onChange={(e) => setLeadData({...leadData, name: e.target.value})} className="w-full border border-white/10 focus:border-[#ff7b1a] rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
+                                            <input type="email" required placeholder="Business Email" value={leadData.email} onChange={(e) => setLeadData({...leadData, email: e.target.value})} className="w-full border border-white/10 focus:border-[#ff7b1a] rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <input type="tel" required placeholder="Phone Number" value={leadData.phone} onChange={(e) => setLeadData({...leadData, phone: e.target.value})} className="w-full border border-white/10 focus:border-cyber-neonBlue rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
-                                            <input type="text" required placeholder="Company Name" value={leadData.company} onChange={(e) => setLeadData({...leadData, company: e.target.value})} className="w-full border border-white/10 focus:border-cyber-neonBlue rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
+                                            <input type="tel" required placeholder="Phone Number" value={leadData.phone} onChange={(e) => setLeadData({...leadData, phone: e.target.value})} className="w-full border border-white/10 focus:border-[#ff7b1a] rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
+                                            <input type="text" required placeholder="Company Name" value={leadData.company} onChange={(e) => setLeadData({...leadData, company: e.target.value})} className="w-full border border-white/10 focus:border-[#ff7b1a] rounded-xl px-4 py-3.5 focus:outline-none bg-white/5 text-white font-bold" />
                                         </div>
-                                        <button type="submit" className="w-full bg-gradient-to-r from-orange-500 via-pink-500 to-cyber-accent text-white font-black py-4 rounded-xl transition duration-300 shadow-md">
+                                        <button type="submit" className="w-full bg-[#ff7b1a] hover:bg-[#e06200] text-white font-black py-4 rounded-xl transition duration-300 shadow-md">
                                             Send Me The Report &rarr;
                                         </button>
                                     </form>
@@ -873,8 +946,8 @@ Output format must be pure JSON with the following structure without extra markd
                             )}
                         </div>
 
-                        {/* Revised Copyright Footer */}
-                        <div className="mt-8 text-center text-xs text-white/40 font-semibold tracking-wide">
+                        {/* Copyright Footer */}
+                        <div className="mt-8 text-center text-xs text-white/40 font-semibold tracking-wide select-none">
                             Copyright © 2026 Voxlumedia™ | Creative Agency for Digital Marketing
                         </div>
 
